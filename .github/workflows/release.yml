@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Run tests
+        run: go test ./... -v
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Homebrew tap
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Extract version from tag (strip leading v)
+          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${GITHUB_REF_NAME}"
+
+          # Define archive names matching goreleaser name_template
+          DARWIN_ARM64="aryflow_${VERSION}_darwin_arm64.tar.gz"
+          DARWIN_AMD64="aryflow_${VERSION}_darwin_amd64.tar.gz"
+          LINUX_AMD64="aryflow_${VERSION}_linux_amd64.tar.gz"
+
+          # Download release archives
+          RELEASE_URL="https://github.com/EslavaDev/aryflow/releases/download/${TAG}"
+          curl -sL -o "${DARWIN_ARM64}" "${RELEASE_URL}/${DARWIN_ARM64}"
+          curl -sL -o "${DARWIN_AMD64}" "${RELEASE_URL}/${DARWIN_AMD64}"
+          curl -sL -o "${LINUX_AMD64}" "${RELEASE_URL}/${LINUX_AMD64}"
+
+          # Calculate SHA256 checksums
+          SHA_DARWIN_ARM64=$(sha256sum "${DARWIN_ARM64}" | awk '{print $1}')
+          SHA_DARWIN_AMD64=$(sha256sum "${DARWIN_AMD64}" | awk '{print $1}')
+          SHA_LINUX_AMD64=$(sha256sum "${LINUX_AMD64}" | awk '{print $1}')
+
+          # Clone the Homebrew tap repo
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/EslavaDev/homebrew-aryflow.git" tap
+
+          # Generate the formula
+          cat > tap/Formula/aryflow.rb <<FORMULA
+          class Aryflow < Formula
+            desc "CLI tool for AryFlow workflow automation"
+            homepage "https://github.com/EslavaDev/aryflow"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "${RELEASE_URL}/${DARWIN_ARM64}"
+                sha256 "${SHA_DARWIN_ARM64}"
+              else
+                url "${RELEASE_URL}/${DARWIN_AMD64}"
+                sha256 "${SHA_DARWIN_AMD64}"
+              end
+            end
+
+            on_linux do
+              url "${RELEASE_URL}/${LINUX_AMD64}"
+              sha256 "${SHA_LINUX_AMD64}"
+            end
+
+            def install
+              bin.install "aryflow"
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/aryflow --version")
+            end
+          end
+          FORMULA
+
+          # Remove leading whitespace from heredoc indentation
+          sed -i 's/^          //' tap/Formula/aryflow.rb
+
+          # Commit and push
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/aryflow.rb
+          git commit -m "Update aryflow to ${VERSION}"
+          git push

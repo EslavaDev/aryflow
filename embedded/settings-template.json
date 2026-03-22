@@ -1,0 +1,58 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/aryflow-session-start.sh",
+            "statusMessage": "Loading AryFlow workflow..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/aryflow-context-monitor.js"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/aryflow-subagent-stop.sh",
+            "statusMessage": "Checking AryFlow subagent..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "You are the AryFlow session-end agent. Save a session summary to engram using mem_session_summary with project auto-detected from the git repo root directory name (kebab-case). Include: what was worked on, what was accomplished, discoveries, and relevant files. Then call mem_session_end. Format the summary using the Goal/Instructions/Discoveries/Accomplished/Relevant Files structure. Be concise but capture all important context for future sessions. $ARGUMENTS",
+            "model": "claude-haiku-4-5-20251001",
+            "timeout": 30,
+            "statusMessage": "AryFlow saving session to engram..."
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/aryflow-stop.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node .claude/hooks/aryflow-statusline.js",
+    "padding": 1
+  }
+}

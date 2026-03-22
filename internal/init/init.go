@@ -2,6 +2,7 @@
 package initialize
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -96,7 +97,12 @@ func Run(force bool, skipClaudeMD bool, verbose bool, version string) error {
 		ui.Success(fmt.Sprintf("Copied %s", friendlyName))
 	}
 
-	// 8. Handle CLAUDE.md
+	// 8. Merge settings.json (hooks + statusLine)
+	if err := mergeSettings(gitRoot); err != nil {
+		ui.Error(fmt.Sprintf("Failed to merge settings.json: %v", err))
+	}
+
+	// 9. Handle CLAUDE.md
 	claudeMDPath := filepath.Join(gitRoot, "CLAUDE.md")
 	if skipClaudeMD {
 		ui.Info("CLAUDE.md — skipped (--skip-claude-md)")
@@ -128,7 +134,7 @@ func Run(force bool, skipClaudeMD bool, verbose bool, version string) error {
 		}
 	}
 
-	// 9. Create specifications/ directory
+	// 10. Create specifications/ directory
 	specsDir := filepath.Join(gitRoot, "specifications")
 	if _, err := os.Stat(specsDir); err == nil {
 		ui.Success("specifications/ already exists")
@@ -140,7 +146,7 @@ func Run(force bool, skipClaudeMD bool, verbose bool, version string) error {
 		}
 	}
 
-	// 10. Final message
+	// 11. Final message
 	fmt.Println()
 	ui.Success("AryFlow initialized. Start with: /spec-it {feature-name}")
 
@@ -214,6 +220,90 @@ func warnExistingSkills(gitRoot string) {
 			return
 		}
 	}
+}
+
+// mergeSettings merges the AryFlow settings template into the project's .claude/settings.json.
+// If settings.json doesn't exist, it writes the template directly.
+// If it exists, it merges hooks (adding missing ones) and statusLine (if not present).
+func mergeSettings(gitRoot string) error {
+	templateData, err := embedded.ReadSettingsTemplate()
+	if err != nil {
+		return fmt.Errorf("reading settings template: %w", err)
+	}
+
+	var template map[string]interface{}
+	if err := json.Unmarshal(templateData, &template); err != nil {
+		return fmt.Errorf("parsing settings template: %w", err)
+	}
+
+	settingsPath := filepath.Join(gitRoot, ".claude", "settings.json")
+
+	// Ensure .claude/ directory exists
+	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+		return fmt.Errorf("creating .claude directory: %w", err)
+	}
+
+	existingData, err := os.ReadFile(settingsPath)
+	if err != nil {
+		// File doesn't exist — write template directly
+		formatted, err := json.MarshalIndent(template, "", "  ")
+		if err != nil {
+			return fmt.Errorf("formatting settings: %w", err)
+		}
+		if err := os.WriteFile(settingsPath, append(formatted, '\n'), 0o644); err != nil {
+			return err
+		}
+		ui.Success("Created .claude/settings.json with AryFlow hooks")
+		return nil
+	}
+
+	// File exists — merge
+	var existing map[string]interface{}
+	if err := json.Unmarshal(existingData, &existing); err != nil {
+		return fmt.Errorf("parsing existing settings.json: %w", err)
+	}
+
+	merged := false
+
+	// Merge hooks
+	templateHooks, _ := template["hooks"].(map[string]interface{})
+	existingHooks, ok := existing["hooks"].(map[string]interface{})
+	if !ok {
+		// No hooks in existing — add all template hooks
+		existing["hooks"] = template["hooks"]
+		merged = true
+	} else {
+		// Add missing hook events from template
+		for key, val := range templateHooks {
+			if _, exists := existingHooks[key]; !exists {
+				existingHooks[key] = val
+				merged = true
+			}
+		}
+	}
+
+	// Merge statusLine if not present
+	if _, ok := existing["statusLine"]; !ok {
+		if tmplStatus, ok := template["statusLine"]; ok {
+			existing["statusLine"] = tmplStatus
+			merged = true
+		}
+	}
+
+	if !merged {
+		ui.Info("settings.json already has all AryFlow hooks")
+		return nil
+	}
+
+	formatted, err := json.MarshalIndent(existing, "", "  ")
+	if err != nil {
+		return fmt.Errorf("formatting merged settings: %w", err)
+	}
+	if err := os.WriteFile(settingsPath, append(formatted, '\n'), 0o644); err != nil {
+		return err
+	}
+	ui.Success("Merged AryFlow hooks into .claude/settings.json")
+	return nil
 }
 
 // friendlyLabel returns a human-readable label for a managed file.

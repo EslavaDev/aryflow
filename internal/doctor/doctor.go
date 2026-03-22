@@ -2,6 +2,7 @@
 package doctor
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,11 +36,11 @@ type Summary struct {
 	Errors   int
 }
 
-// RunChecks executes all 15 doctor checks and returns the results.
+// RunChecks executes all 21 doctor checks and returns the results.
 // It never stops on first failure.
 func RunChecks(cliVersion string) []CheckResult {
 	gitRoot := findGitRoot()
-	results := make([]CheckResult, 0, 15)
+	results := make([]CheckResult, 0, 21)
 
 	// 1. Git repo
 	results = append(results, checkGitRepo())
@@ -83,7 +84,25 @@ func RunChecks(cliVersion string) []CheckResult {
 	// 14. Superpowers installed
 	results = append(results, checkSuperpowers())
 
-	// 15. Version match
+	// 15. AryFlow rules
+	results = append(results, checkFileExists(root, ".claude/rules/aryflow.md", "AryFlow rules", SeverityError, "Run: aryflow init"))
+
+	// 16. SessionStart hook
+	results = append(results, checkFileExists(root, ".claude/hooks/aryflow-session-start.sh", "SessionStart hook", SeverityError, "Run: aryflow init"))
+
+	// 17. StatusLine hook
+	results = append(results, checkFileExists(root, ".claude/hooks/aryflow-statusline.js", "StatusLine hook", SeverityWarning, "Run: aryflow init"))
+
+	// 18. Context monitor
+	results = append(results, checkFileExists(root, ".claude/hooks/aryflow-context-monitor.js", "Context monitor", SeverityWarning, "Run: aryflow init"))
+
+	// 19. Settings.json hooks
+	results = append(results, checkSettingsJSON(root))
+
+	// 20. Active TODO.md
+	results = append(results, checkActiveTODO(root))
+
+	// 21. Version match
 	results = append(results, checkVersionMatch(root, cliVersion))
 
 	return results
@@ -273,6 +292,119 @@ func checkSuperpowers() CheckResult {
 	}
 	return CheckResult{
 		Name:   "Superpowers plugin",
+		Passed: true,
+	}
+}
+
+func checkSettingsJSON(root string) CheckResult {
+	name := "Settings.json hooks"
+	fix := "Run: aryflow init"
+
+	data, err := os.ReadFile(filepath.Join(root, ".claude/settings.json"))
+	if err != nil {
+		return CheckResult{
+			Name:     name,
+			Passed:   false,
+			Severity: SeverityWarning,
+			Message:  "missing .claude/settings.json",
+			Fix:      fix,
+		}
+	}
+
+	var settings map[string]interface{}
+	if err := json.Unmarshal(data, &settings); err != nil {
+		return CheckResult{
+			Name:     name,
+			Passed:   false,
+			Severity: SeverityWarning,
+			Message:  "invalid JSON in .claude/settings.json",
+			Fix:      fix,
+		}
+	}
+
+	// Check hooks.SessionStart exists
+	hooks, ok := settings["hooks"]
+	if !ok {
+		return CheckResult{
+			Name:     name,
+			Passed:   false,
+			Severity: SeverityWarning,
+			Message:  "hooks not configured in settings.json",
+			Fix:      fix,
+		}
+	}
+	hooksMap, ok := hooks.(map[string]interface{})
+	if !ok {
+		return CheckResult{
+			Name:     name,
+			Passed:   false,
+			Severity: SeverityWarning,
+			Message:  "hooks is not an object in settings.json",
+			Fix:      fix,
+		}
+	}
+	if _, ok := hooksMap["SessionStart"]; !ok {
+		return CheckResult{
+			Name:     name,
+			Passed:   false,
+			Severity: SeverityWarning,
+			Message:  "SessionStart hook not configured",
+			Fix:      fix,
+		}
+	}
+
+	// Check top-level statusLine exists
+	if _, ok := settings["statusLine"]; !ok {
+		return CheckResult{
+			Name:     name,
+			Passed:   false,
+			Severity: SeverityWarning,
+			Message:  "statusLine not configured in settings.json",
+			Fix:      fix,
+		}
+	}
+
+	return CheckResult{
+		Name:   name,
+		Passed: true,
+	}
+}
+
+func checkActiveTODO(root string) CheckResult {
+	name := "Active TODO.md"
+	fix := "Update TODO.md checkboxes after completing waves"
+
+	pattern := filepath.Join(root, "specifications", "*", "TODO.md")
+	matches, err := filepath.Glob(pattern)
+	if err != nil || len(matches) == 0 {
+		return CheckResult{
+			Name:   name,
+			Passed: true, // no TODOs to check is fine
+		}
+	}
+
+	for _, todoPath := range matches {
+		data, err := os.ReadFile(todoPath)
+		if err != nil {
+			continue
+		}
+		content := string(data)
+		hasUnchecked := strings.Contains(content, "- [ ]")
+		hasChecked := strings.Contains(content, "- [x]")
+		if hasUnchecked && hasChecked {
+			rel, _ := filepath.Rel(root, todoPath)
+			return CheckResult{
+				Name:     name,
+				Passed:   false,
+				Severity: SeverityWarning,
+				Message:  fmt.Sprintf("stale progress in %s", rel),
+				Fix:      fix,
+			}
+		}
+	}
+
+	return CheckResult{
+		Name:   name,
 		Passed: true,
 	}
 }

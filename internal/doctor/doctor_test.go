@@ -171,7 +171,7 @@ func TestSummarize_Empty(t *testing.T) {
 }
 
 func TestRunChecks_InTempDir(t *testing.T) {
-	// Run in a temp dir with minimal setup to verify all 15 checks execute
+	// Run in a temp dir with minimal setup to verify all 21 checks execute
 	dir := t.TempDir()
 	os.MkdirAll(filepath.Join(dir, ".git"), 0o755)
 
@@ -180,8 +180,8 @@ func TestRunChecks_InTempDir(t *testing.T) {
 	os.Chdir(dir)
 
 	results := RunChecks("0.1.0")
-	if len(results) != 15 {
-		t.Errorf("expected 15 checks, got %d", len(results))
+	if len(results) != 21 {
+		t.Errorf("expected 21 checks, got %d", len(results))
 	}
 
 	// First check (git repo) should pass since we created .git
@@ -206,5 +206,136 @@ func TestCheckFileExists_VersionShowsValue(t *testing.T) {
 	}
 	if r.Name != ".aryflow/version (v0.3.0)" {
 		t.Errorf("expected name to include version, got %q", r.Name)
+	}
+}
+
+func TestCheckSettingsJSON_Valid(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, ".claude"), 0o755)
+	content := `{"hooks":{"SessionStart":["bash .claude/hooks/aryflow-session-start.sh"]},"statusLine":"node .claude/hooks/aryflow-statusline.js"}`
+	os.WriteFile(filepath.Join(dir, ".claude/settings.json"), []byte(content), 0o644)
+
+	r := checkSettingsJSON(dir)
+	if !r.Passed {
+		t.Errorf("expected checkSettingsJSON to pass, got: %s", r.Message)
+	}
+}
+
+func TestCheckSettingsJSON_Missing(t *testing.T) {
+	dir := t.TempDir()
+
+	r := checkSettingsJSON(dir)
+	if r.Passed {
+		t.Error("expected checkSettingsJSON to fail when file is missing")
+	}
+	if r.Severity != SeverityWarning {
+		t.Errorf("expected SeverityWarning, got %d", r.Severity)
+	}
+}
+
+func TestCheckSettingsJSON_NoHooks(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, ".claude"), 0o755)
+	os.WriteFile(filepath.Join(dir, ".claude/settings.json"), []byte(`{"statusLine":"test"}`), 0o644)
+
+	r := checkSettingsJSON(dir)
+	if r.Passed {
+		t.Error("expected checkSettingsJSON to fail when hooks missing")
+	}
+	if r.Message != "hooks not configured in settings.json" {
+		t.Errorf("unexpected message: %s", r.Message)
+	}
+}
+
+func TestCheckSettingsJSON_NoSessionStart(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, ".claude"), 0o755)
+	os.WriteFile(filepath.Join(dir, ".claude/settings.json"), []byte(`{"hooks":{},"statusLine":"test"}`), 0o644)
+
+	r := checkSettingsJSON(dir)
+	if r.Passed {
+		t.Error("expected checkSettingsJSON to fail when SessionStart missing")
+	}
+	if r.Message != "SessionStart hook not configured" {
+		t.Errorf("unexpected message: %s", r.Message)
+	}
+}
+
+func TestCheckSettingsJSON_NoStatusLine(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, ".claude"), 0o755)
+	os.WriteFile(filepath.Join(dir, ".claude/settings.json"), []byte(`{"hooks":{"SessionStart":["test"]}}`), 0o644)
+
+	r := checkSettingsJSON(dir)
+	if r.Passed {
+		t.Error("expected checkSettingsJSON to fail when statusLine missing")
+	}
+	if r.Message != "statusLine not configured in settings.json" {
+		t.Errorf("unexpected message: %s", r.Message)
+	}
+}
+
+func TestCheckSettingsJSON_InvalidJSON(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, ".claude"), 0o755)
+	os.WriteFile(filepath.Join(dir, ".claude/settings.json"), []byte(`{invalid`), 0o644)
+
+	r := checkSettingsJSON(dir)
+	if r.Passed {
+		t.Error("expected checkSettingsJSON to fail on invalid JSON")
+	}
+	if r.Message != "invalid JSON in .claude/settings.json" {
+		t.Errorf("unexpected message: %s", r.Message)
+	}
+}
+
+func TestCheckActiveTODO_NoTodos(t *testing.T) {
+	dir := t.TempDir()
+
+	r := checkActiveTODO(dir)
+	if !r.Passed {
+		t.Error("expected checkActiveTODO to pass when no TODOs exist")
+	}
+}
+
+func TestCheckActiveTODO_StaleProgress(t *testing.T) {
+	dir := t.TempDir()
+	specDir := filepath.Join(dir, "specifications", "001-feature")
+	os.MkdirAll(specDir, 0o755)
+	content := "# TODO\n- [x] Done task\n- [ ] Pending task\n"
+	os.WriteFile(filepath.Join(specDir, "TODO.md"), []byte(content), 0o644)
+
+	r := checkActiveTODO(dir)
+	if r.Passed {
+		t.Error("expected checkActiveTODO to fail with stale progress")
+	}
+	if r.Severity != SeverityWarning {
+		t.Errorf("expected SeverityWarning, got %d", r.Severity)
+	}
+}
+
+func TestCheckActiveTODO_AllDone(t *testing.T) {
+	dir := t.TempDir()
+	specDir := filepath.Join(dir, "specifications", "001-feature")
+	os.MkdirAll(specDir, 0o755)
+	content := "# TODO\n- [x] Done task\n- [x] Also done\n"
+	os.WriteFile(filepath.Join(specDir, "TODO.md"), []byte(content), 0o644)
+
+	r := checkActiveTODO(dir)
+	if !r.Passed {
+		t.Errorf("expected checkActiveTODO to pass when all done, got: %s", r.Message)
+	}
+}
+
+func TestCheckActiveTODO_AllPending(t *testing.T) {
+	dir := t.TempDir()
+	specDir := filepath.Join(dir, "specifications", "001-feature")
+	os.MkdirAll(specDir, 0o755)
+	content := "# TODO\n- [ ] Pending task\n- [ ] Also pending\n"
+	os.WriteFile(filepath.Join(specDir, "TODO.md"), []byte(content), 0o644)
+
+	r := checkActiveTODO(dir)
+	if !r.Passed {
+		t.Errorf("expected checkActiveTODO to pass when all pending, got: %s", r.Message)
 	}
 }

@@ -32,20 +32,20 @@
 - [x] Write unit tests for doctor and update packages
 
 ## Wave 4 — Integration + Build <!-- depends:wave2,wave3, branch -->
-- [ ] Wire all commands in main.go, test full CLI flow end-to-end
-- [ ] Create Makefile with targets: build, test, build-all (cross-compile darwin-arm64, darwin-amd64, linux-amd64)
-- [ ] Create .goreleaser.yml or equivalent for automated release builds
-- [ ] Write integration tests: setup in clean env, init in git repo, doctor after init, update with version mismatch
-- [ ] Create `make sync-embedded` target to copy skills/agents from canonical source
-- [ ] Write README.md with install instructions, usage, examples
+- [x] Wire all commands in main.go, test full CLI flow end-to-end
+- [x] Create Makefile with targets: build, test, build-all (cross-compile darwin-arm64, darwin-amd64, linux-amd64)
+- [x] Create .goreleaser.yml or equivalent for automated release builds
+- [x] Write integration tests: setup in clean env, init in git repo, doctor after init, update with version mismatch
+- [x] Create `make sync-embedded` target to copy skills/agents from canonical source
+- [x] Write README.md with install instructions, usage, examples
 
 ## Wave 5 — Hooks, Rules, Settings <!-- depends:wave1, branch -->
 (runs PARALLEL with Wave 2 and 3 — depends only on Wave 1)
-- [ ] Copy hooks to embedded/: aryflow-session-start.sh, aryflow-stop.sh, aryflow-subagent-stop.sh, aryflow-statusline.js, aryflow-context-monitor.js
-- [ ] Copy rules to embedded/: aryflow.md
-- [ ] Create embedded/settings-template.json with AryFlow hooks config
-- [ ] Update init command to copy hooks, rules, and merge settings.json
-- [ ] Update doctor to check for hooks and rules files
+- [x] Copy hooks to embedded/: aryflow-session-start.sh, aryflow-stop.sh, aryflow-subagent-stop.sh, aryflow-statusline.js, aryflow-context-monitor.js
+- [x] Copy rules to embedded/: aryflow.md
+- [x] Create embedded/settings-template.json with AryFlow hooks config
+- [x] Update init command to copy hooks, rules, and merge settings.json
+- [x] Update doctor to check for hooks and rules files
 
 ## Wave 6 — Homebrew + Release <!-- depends:wave4,wave5, branch -->
 - [ ] Create aryflow/homebrew-tap repo with Formula/aryflow.rb

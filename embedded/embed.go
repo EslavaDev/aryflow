@@ -7,7 +7,7 @@ import (
 	"io/fs"
 )
 
-//go:embed skills agents rules hooks
+//go:embed skills agents rules hooks settings-template.json
 var content embed.FS
 
 // Skills returns the embedded skills filesystem rooted at "skills/".
@@ -72,6 +72,11 @@ func ReadRule(name string) ([]byte, error) {
 // ReadHook reads a hook file by name (e.g., "aryflow-session-start.sh").
 func ReadHook(name string) ([]byte, error) {
 	return fs.ReadFile(Hooks(), name)
+}
+
+// ReadSettingsTemplate reads the embedded settings-template.json file.
+func ReadSettingsTemplate() ([]byte, error) {
+	return content.ReadFile("settings-template.json")
 }
 
 // Content returns the full embedded FS (for walking all files).

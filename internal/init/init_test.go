@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -215,6 +216,159 @@ func TestFriendlyLabel(t *testing.T) {
 	}
 }
 
+func TestMergeSettingsCreatesNewFile(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	err := mergeSettings(tmpDir)
+	if err != nil {
+		t.Fatalf("mergeSettings failed: %v", err)
+	}
+
+	settingsPath := filepath.Join(tmpDir, ".claude", "settings.json")
+	data, err := os.ReadFile(settingsPath)
+	if err != nil {
+		t.Fatal("expected .claude/settings.json to be created")
+	}
+
+	var settings map[string]interface{}
+	if err := json.Unmarshal(data, &settings); err != nil {
+		t.Fatalf("invalid JSON in settings.json: %v", err)
+	}
+
+	// Should have hooks and statusLine
+	if _, ok := settings["hooks"]; !ok {
+		t.Error("expected hooks key in settings.json")
+	}
+	if _, ok := settings["statusLine"]; !ok {
+		t.Error("expected statusLine key in settings.json")
+	}
+
+	// Should have all 4 hook events
+	hooks := settings["hooks"].(map[string]interface{})
+	for _, key := range []string{"SessionStart", "PostToolUse", "SubagentStop", "Stop"} {
+		if _, ok := hooks[key]; !ok {
+			t.Errorf("expected hook event %q in settings.json", key)
+		}
+	}
+}
+
+func TestMergeSettingsMergesIntoExisting(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create existing settings.json with permissions and one hook
+	existing := map[string]interface{}{
+		"permissions": map[string]interface{}{
+			"allow": []string{"Bash(git:*)"},
+		},
+		"hooks": map[string]interface{}{
+			"SessionStart": []interface{}{
+				map[string]interface{}{
+					"hooks": []interface{}{
+						map[string]interface{}{
+							"type":    "command",
+							"command": "echo custom-session-start",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	settingsDir := filepath.Join(tmpDir, ".claude")
+	os.MkdirAll(settingsDir, 0o755)
+	data, _ := json.MarshalIndent(existing, "", "  ")
+	os.WriteFile(filepath.Join(settingsDir, "settings.json"), data, 0o644)
+
+	err := mergeSettings(tmpDir)
+	if err != nil {
+		t.Fatalf("mergeSettings failed: %v", err)
+	}
+
+	// Read back
+	result, _ := os.ReadFile(filepath.Join(settingsDir, "settings.json"))
+	var merged map[string]interface{}
+	json.Unmarshal(result, &merged)
+
+	// permissions should be preserved
+	if _, ok := merged["permissions"]; !ok {
+		t.Error("expected permissions to be preserved")
+	}
+
+	// SessionStart should NOT be overwritten (existing hook preserved)
+	hooks := merged["hooks"].(map[string]interface{})
+	sessionStart := hooks["SessionStart"].([]interface{})
+	firstGroup := sessionStart[0].(map[string]interface{})
+	hooksList := firstGroup["hooks"].([]interface{})
+	firstHook := hooksList[0].(map[string]interface{})
+	if firstHook["command"] != "echo custom-session-start" {
+		t.Error("expected existing SessionStart hook to be preserved")
+	}
+
+	// Missing hooks should be added
+	for _, key := range []string{"PostToolUse", "SubagentStop", "Stop"} {
+		if _, ok := hooks[key]; !ok {
+			t.Errorf("expected missing hook %q to be added", key)
+		}
+	}
+
+	// statusLine should be added
+	if _, ok := merged["statusLine"]; !ok {
+		t.Error("expected statusLine to be added")
+	}
+}
+
+func TestMergeSettingsNoOpWhenComplete(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// First merge creates the file
+	mergeSettings(tmpDir)
+
+	settingsPath := filepath.Join(tmpDir, ".claude", "settings.json")
+	firstData, _ := os.ReadFile(settingsPath)
+
+	// Second merge should be a no-op
+	err := mergeSettings(tmpDir)
+	if err != nil {
+		t.Fatalf("second mergeSettings failed: %v", err)
+	}
+
+	secondData, _ := os.ReadFile(settingsPath)
+
+	// Content should be identical (no-op)
+	if string(firstData) != string(secondData) {
+		t.Error("expected second merge to be a no-op")
+	}
+}
+
+func TestMergeSettingsPreservesExistingStatusLine(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create existing settings with a custom statusLine
+	existing := map[string]interface{}{
+		"statusLine": map[string]interface{}{
+			"type":    "command",
+			"command": "echo custom-status",
+		},
+	}
+
+	settingsDir := filepath.Join(tmpDir, ".claude")
+	os.MkdirAll(settingsDir, 0o755)
+	data, _ := json.MarshalIndent(existing, "", "  ")
+	os.WriteFile(filepath.Join(settingsDir, "settings.json"), data, 0o644)
+
+	mergeSettings(tmpDir)
+
+	result, _ := os.ReadFile(filepath.Join(settingsDir, "settings.json"))
+	var merged map[string]interface{}
+	json.Unmarshal(result, &merged)
+
+	// statusLine should be the original custom one
+	sl := merged["statusLine"].(map[string]interface{})
+	if sl["command"] != "echo custom-status" {
+		t.Error("expected existing statusLine to be preserved")
+	}
+}
+
 // runInit is a testable version of the core init logic that takes gitRoot directly
 // instead of detecting it. This avoids shelling out to git in tests.
 func runInit(gitRoot string, force bool, skipClaudeMD bool, version string) error {
@@ -252,6 +406,11 @@ func runInit(gitRoot string, force bool, skipClaudeMD bool, version string) erro
 		if err := os.WriteFile(destPath, data, 0o644); err != nil {
 			continue
 		}
+	}
+
+	// Merge settings.json
+	if err := mergeSettings(gitRoot); err != nil {
+		return err
 	}
 
 	// CLAUDE.md

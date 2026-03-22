@@ -1,0 +1,48 @@
+# GoReleaser config for AryFlow CLI
+# Triggered by GitHub Actions on tag push (vX.Y.Z)
+version: 2
+
+builds:
+  - id: aryflow
+    main: ./cmd/aryflow
+    binary: aryflow
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: linux
+        goarch: arm64
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - id: aryflow
+    builds:
+      - aryflow
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+
+release:
+  github:
+    owner: EslavaDev
+    name: aryflow
+  draft: false
+  prerelease: auto
+  name_template: "v{{ .Version }}"

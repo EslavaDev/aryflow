@@ -1,23 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git:*)",
-      "Bash(go:*)",
-      "Bash(make:*)",
-      "Bash(ls:*)",
-      "Bash(cat:*)",
-      "Bash(mkdir:*)",
-      "Bash(cp:*)",
-      "Bash(echo:*)",
-      "Bash(test:*)",
-      "Bash(export:*)",
-      "Bash(chmod:*)",
-      "Bash(gh:*)",
+      "Bash",
       "Write",
       "Edit",
       "Read",
       "Glob",
-      "Grep"
+      "Grep",
+      "Agent"
     ]
   },
   "hooks": {

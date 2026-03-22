@@ -33,13 +33,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update Homebrew tap
-        env:
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      - name: Update Homebrew formula
         run: |
           set -euo pipefail
 
-          # Extract version from tag (strip leading v)
           VERSION="${GITHUB_REF_NAME#v}"
           TAG="${GITHUB_REF_NAME}"
 
@@ -59,11 +56,8 @@ jobs:
           SHA_DARWIN_AMD64=$(sha256sum "${DARWIN_AMD64}" | awk '{print $1}')
           SHA_LINUX_AMD64=$(sha256sum "${LINUX_AMD64}" | awk '{print $1}')
 
-          # Clone the Homebrew tap repo
-          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/EslavaDev/homebrew-aryflow.git" tap
-
-          # Generate the formula
-          cat > tap/Formula/aryflow.rb <<FORMULA
+          # Generate the formula in this repo
+          cat > Formula/aryflow.rb <<FORMULA
           class Aryflow < Formula
             desc "CLI tool for AryFlow workflow automation"
             homepage "https://github.com/EslavaDev/aryflow"
@@ -96,12 +90,11 @@ jobs:
           FORMULA
 
           # Remove leading whitespace from heredoc indentation
-          sed -i 's/^          //' tap/Formula/aryflow.rb
+          sed -i 's/^          //' Formula/aryflow.rb
 
-          # Commit and push
-          cd tap
+          # Commit and push to main
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/aryflow.rb
-          git commit -m "Update aryflow to ${VERSION}"
-          git push
+          git commit -m "formula: update aryflow to ${VERSION}"
+          git push origin HEAD:main

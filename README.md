@@ -11,7 +11,7 @@ A single Go binary that provides four commands to go from zero to a fully config
 ### Homebrew (recommended)
 
 ```bash
-brew tap aryflow/tap
+brew tap EslavaDev/aryflow https://github.com/EslavaDev/aryflow
 brew install aryflow
 ```
 

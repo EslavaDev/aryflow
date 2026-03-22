@@ -50,5 +50,5 @@
 ## Wave 6 — Homebrew + Release <!-- depends:wave4,wave5, branch -->
 - [x] Create aryflow/homebrew-tap repo with Formula/aryflow.rb
 - [x] Create GitHub Actions workflow: tag → build → release → update formula
-- [ ] Tag v0.1.0, verify `brew tap EslavaDev/aryflow && brew install aryflow` works
-- [ ] Test full flow: setup → init → doctor → update on a clean project
+- [x] Tag v0.1.0, verify `brew tap EslavaDev/aryflow && brew install aryflow` works
+- [x] Test full flow: setup → init → doctor → update on a clean project

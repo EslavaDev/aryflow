@@ -83,6 +83,22 @@ mem_save(topic: "aryflow/knowledge/go-conventions",
   project: "aryflow")
 ```
 
+### Discovery Extraction from Session Summaries
+
+Session summaries mix temporal info (Goal, Accomplished) with permanent knowledge (Discoveries). When a summary is deprecated, the discoveries would be lost. To prevent this:
+
+1. The Stop hook agent saves the session summary as before (temporal, gets deprecated next session)
+2. After saving the summary, it extracts each non-trivial Discovery and saves it as a **separate** `[ACTIVE]` knowledge entry under `{project}/knowledge/{category}`
+3. These knowledge entries are **independent** — they survive even when the summary is deprecated
+4. Skip obvious or already-known discoveries to avoid duplication
+
+Discovery categories use topic keys like:
+- `aryflow/knowledge/go-macos` — Go build issues, macOS gotchas
+- `aryflow/knowledge/ci-release` — CI/CD pipeline, GoReleaser
+- `aryflow/knowledge/homebrew` — Homebrew tap and distribution
+- `aryflow/knowledge/engram` — Memory lifecycle rules
+- `aryflow/knowledge/{new-category}` — Any new topic as needed
+
 ### Maintenance
 
 - Run knowledge-gc agent at milestone boundaries to clean up `[DEPRECATED]` entries

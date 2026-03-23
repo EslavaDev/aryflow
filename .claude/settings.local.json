@@ -16,7 +16,8 @@
       "Bash(PATH=\"$HOME/.goenv/versions/1.22.4/bin:$PATH\" go test ./test/integration/ -v -timeout 120s)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:github.com)",
-      "Bash(PATH=\"$HOME/.goenv/versions/1.22.4/bin:$PATH\" go build ./cmd/aryflow)"
+      "Bash(PATH=\"$HOME/.goenv/versions/1.22.4/bin:$PATH\" go build ./cmd/aryflow)",
+      "Bash(PATH=\"$HOME/.goenv/versions/1.22.4/bin:$PATH\" CGO_ENABLED=0 go build ./cmd/aryflow)"
     ],
     "defaultMode": "bypassPermissions"
   }

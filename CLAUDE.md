@@ -52,10 +52,20 @@ aryflow/
 - Colors support `ARYFLOW_NO_COLOR=1` env var
 - Prompts support `ARYFLOW_YES=1` env var (CI mode)
 
+## Embedded Files Rule (non-negotiable)
+
+`.claude/` is the **source of truth**. `embedded/` is a copy for the binary.
+
+1. **ONLY edit `.claude/`** — never edit `embedded/` directly
+2. **After editing `.claude/`, copy to `embedded/`**: `cp .claude/{path} embedded/{path}`
+3. **Hook format**: always use `hookSpecificOutput` with `hookEventName` + `additionalContext` — never `systemMessage` (which only shows in UI, not to the agent)
+4. **Run `make sync-check`** before committing to verify sync
+
 ## Verification
 
 ```bash
 export PATH="$HOME/.goenv/versions/1.22.4/bin:$PATH"
 go build ./cmd/aryflow
 go test ./internal/checks/ ./internal/doctor/ ./internal/init/ ./internal/setup/ ./internal/ui/ -v
+make sync-check
 ```

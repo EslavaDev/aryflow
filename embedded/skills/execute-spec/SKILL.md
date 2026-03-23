@@ -79,16 +79,9 @@ INSTRUCTIONS:
 3. Read CLAUDE.md for project conventions
 4. Implement your specific task following the spec exactly
 5. Run verification commands from CLAUDE.md after implementation.
-6. Save a summary of your work to engram:
-   mem_save(topic: "{project}/$ARGUMENTS/wave-{N}/agent-{task-slug}",
-     content: "Task: {task description}
-     Files: {list of files created/modified}
-     Summary: {what was built, key details}
-     Decisions: {any decisions made during implementation}",
-     project: "{project}")
-7. If you discovered something new (pattern, decision, workaround, convention):
+6. Save to engram ONLY if you discovered something new (pattern, decision, workaround, bug fix, convention):
    mem_save(topic: "{project}/knowledge/{category}", content: "[ACTIVE] {date} — {discovery}", project: "{project}")
-8. If something contradicts existing knowledge:
+7. If something contradicts existing knowledge:
    mem_update(id: {old_id}) → add [DEPRECATED] + supersedes reference
    mem_save new entry as [ACTIVE]
 
@@ -98,20 +91,18 @@ RULES:
 - Respect the layer separation rules defined in CLAUDE.md
 - Every new function needs tests
 - When conflicting knowledge exists, the most recent [ACTIVE] entry wins. Ignore all [DEPRECATED] entries.
+- Do NOT save a summary of what you did — the orchestrator tracks progress.
+- Do NOT call mem_session_summary or mem_session_end — the orchestrator handles this.
 ```
 
 **3. Wait for all agents in the wave to complete.**
 
 **4. Merge and review checkpoint:** Launch the merge-wave agent (`.claude/agents/merge-wave.md`) to handle integration, conflict resolution, dependency installation, and verification. After it returns, present its summary. Stop on unresolved conflicts or verification failures.
 
-**5. Persist wave progress:** Update TODO.md (`[x]`), then save wave summary to engram:
+**5. Persist wave progress:** Update TODO.md (`[x]`), then save minimal progress checkpoint to engram:
 ```
 mem_save(topic: "{project}/$ARGUMENTS/progress",
-  content: "Wave {N} complete.
-  Agents: {count} ({list of task slugs})
-  Files changed: {count}
-  Summary: {what this wave accomplished}
-  Next: Wave {N+1} ({description}) or Done",
+  content: "Wave {N} complete. Tasks: {list of task slugs}. Next: Wave {N+1} or Done.",
   project: "{project}")
 ```
 Commit: `feat({domain}): wave {N} — {brief description}`.
@@ -149,9 +140,8 @@ Follow the testing rules from CLAUDE.md. Run tests after each wave to verify not
 After all waves complete:
 
 1. Launch **post-spec-docs agent** (`.claude/agents/post-spec-docs.md`) to update CLAUDE.md, docs, and .env.example if needed.
-2. `mem_session_summary()` → `mem_session_end()` → final verification → announce completion.
-
-Skip engram calls if unavailable.
+2. Final verification → announce completion.
+3. Do NOT call `mem_session_summary()` or `mem_session_end()` — the Stop hook handles session cleanup.
 
 ---
 

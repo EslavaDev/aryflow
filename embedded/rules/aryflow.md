@@ -2,6 +2,16 @@
 
 > These rules are MANDATORY for all users of this project. They are enforced by hooks, skills, and this file.
 
+## Update TODO.md After EVERY Wave (non-negotiable)
+
+After completing a wave, the FIRST action is updating TODO.md:
+1. Mark completed tasks as `[x]`
+2. Commit the TODO.md update
+3. Save progress to engram
+4. THEN proceed to next wave
+
+The statusline reads TODO.md for progress display. Stale TODO = wrong status for the whole team.
+
 ## Mandatory Steps (never skip)
 
 Only brainstorming is optional. Everything else is mandatory:
@@ -12,8 +22,8 @@ Only brainstorming is optional. Everything else is mandatory:
 4. **Review TODO.md** for wave dependencies — BEFORE showing to user
 5. **Save to engram** — `mem_save` spec + tasks. If engram unavailable, WARN user loudly
 6. `/execute-spec {NNN}-{feature}` — waves with engram session
-7. **Each subagent saves** work summary to engram (`{project}/{change}/wave-{N}/agent-{task}`)
-8. **Each wave saves** progress to engram (`{project}/{change}/progress`)
+7. **Each subagent saves** only technical discoveries to engram (NOT work summaries)
+8. **Orchestrator saves** wave progress checkpoint to engram (`{project}/{change}/progress`)
 9. **Launch post-spec-docs agent** after all waves complete
 10. `superpowers:verification-before-completion`
 11. `/simplify`
@@ -23,10 +33,14 @@ Only brainstorming is optional. Everything else is mandatory:
 ## Engram is Mandatory
 
 If engram MCP tools are available, you MUST use them:
-- `mem_session_start` at session start
-- `mem_save` for specs, tasks, progress, knowledge
-- `mem_session_summary` + `mem_session_end` at session end
+- `mem_save` for specs, tasks, and knowledge discoveries
 - If engram returns empty → try claude-mem as fallback
+- Session lifecycle (`mem_session_start`, `mem_session_summary`, `mem_session_end`) is handled by hooks — do NOT call these manually
+
+Save ONLY: technical discoveries, decisions, bug root causes, conventions.
+Do NOT save: summaries of what you did, progress updates (orchestrator handles these), duplicate information.
+
+**Deduplication Rule:** Before saving, ask: "Is this a NEW discovery or decision?" If it's just a status update or summary of work done, do NOT save it. Each datum is saved in ONE place by ONE actor.
 
 If engram is NOT available, warn: "Running in degraded mode. Run `aryflow setup` to install."
 

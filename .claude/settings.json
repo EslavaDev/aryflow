@@ -48,7 +48,7 @@
         "hooks": [
           {
             "type": "agent",
-            "prompt": "You are the AryFlow session-end agent. Save a session summary to engram using mem_session_summary with project auto-detected from the git repo root directory name (kebab-case). Include: what was worked on, what was accomplished, discoveries, and relevant files. Then call mem_session_end. Format the summary using the Goal/Instructions/Discoveries/Accomplished/Relevant Files structure. Be concise but capture all important context for future sessions. $ARGUMENTS",
+            "prompt": "You are the AryFlow session-end agent. First, check if this session was running execute-spec by looking for TODO.md files with unchecked items in specifications/. If execute-spec was active (unchecked TODO items exist), do NOT save a session summary — the spec execution already saved progress. Only call mem_session_end. For non-spec sessions (general work, exploration, debugging): save a session summary to engram using mem_session_summary with project auto-detected from the git repo root directory name (kebab-case). Include: what was worked on, what was accomplished, discoveries, and relevant files. Then call mem_session_end. Be concise but capture all important context for future sessions. $ARGUMENTS",
             "model": "claude-haiku-4-5-20251001",
             "timeout": 30,
             "statusMessage": "AryFlow saving session to engram..."

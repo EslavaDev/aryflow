@@ -1,10 +1,10 @@
 #!/bin/bash
-# AryFlow SubagentStop hook — reminds orchestrator to verify subagent saved to engram
+# AryFlow SubagentStop hook — reminds orchestrator to check wave completion
 cat <<'EOF'
 {
   "hookSpecificOutput": {
     "hookEventName": "SubagentStop",
-    "additionalContext": "ARYFLOW CHECK: A subagent just completed. Verify:\n1. Did the subagent save a work summary to engram? (mem_save with wave-N/agent-task topic)\n2. Did the subagent save any new knowledge discoveries? (mem_save to knowledge/*)\n3. If this was the last agent in a wave, save wave progress to engram.\n4. If this was merge-wave agent, check its summary for unresolved conflicts."
+    "additionalContext": "ARYFLOW CHECK: A subagent just completed. If this was the last agent in a wave: UPDATE TODO.md marking tasks [x], save minimal wave progress to engram, THEN commit. Subagents do NOT save work summaries — only technical discoveries."
   }
 }
 EOF

@@ -148,29 +148,32 @@ Follow the layer separation rules defined in CLAUDE.md. If no explicit rules exi
 
 Follow the testing rules from CLAUDE.md. Run tests after each wave to verify nothing is broken. Every new function needs tests — use the framework and file locations specified in CLAUDE.md.
 
-## Session end
+## After all waves complete (MANDATORY — do NOT skip any step)
 
-After all waves complete:
+These steps are NOT optional. Execute them IN ORDER after the last wave completes:
 
-1. Launch **post-spec-docs agent** (`.claude/agents/post-spec-docs.md`) to update CLAUDE.md, docs, and .env.example if needed.
-2. Final verification → announce completion.
-3. Do NOT call `mem_session_summary()` or `mem_session_end()` — the Stop hook handles session cleanup.
+### Step 1: Post-spec-docs agent
+Launch the **post-spec-docs agent** (`.claude/agents/post-spec-docs.md`) to update CLAUDE.md, docs, and .env.example if needed.
+
+### Step 2: Verification
+Invoke `superpowers:verification-before-completion` to verify:
+- All tests pass
+- Implementation matches the spec
+- No regressions
+
+### Step 3: Simplify
+Invoke `/simplify` to review changed code for reuse, quality, and efficiency. Fix any issues found.
+
+### Step 4: Finishing
+Invoke `superpowers:finishing-a-development-branch` to decide: merge to main, create PR, or cleanup.
+
+### Step 5: Commit and PR
+Run `/commit` followed by `/pr` to create the pull request.
+
+### Step 6: Session cleanup
+Do NOT call `mem_session_summary()` or `mem_session_end()` — the Stop hook handles session cleanup via dual memory (claude-mem for summary, engram for discoveries).
 
 ---
-
-## Complete Workflow (end-to-end reference)
-
-1. `/brainstorm "feature"` — explore problem, save to engram
-2. `/spec-it {feature}` — generate SPEC.md + TODO.md, auto-review with superpowers:requesting-code-review
-3. `/execute-spec {NNN}-{feature}` — waves of parallel agents, merge, verify, commit per wave
-4. `superpowers:verification-before-completion` — verify tests, spec match, no regressions
-5. `/simplify` — review changed code for reuse, quality, efficiency
-6. `post-spec-docs` agent — update CLAUDE.md, docs, .env.example if needed
-7. `superpowers:finishing-a-development-branch` — decide: merge to main, create PR, or cleanup
-8. `/commit` — conventional commit with Co-Authored-By trailer
-9. `/pr` — create pull request with summary
-
-Each step builds on the previous. Knowledge accumulates across the entire lifecycle.
 
 ### Maintenance (at milestone boundaries)
 - Launch **knowledge-gc agent** (`.claude/agents/knowledge-gc.md`) to clean up [DEPRECATED] entries from engram

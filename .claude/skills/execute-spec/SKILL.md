@@ -31,7 +31,8 @@ Worktree isolation is the exception — only used when two tasks in the SAME wav
 
 After reading local files, load context from engram. **This step is MANDATORY if engram is available.** If engram tools are not found, warn: "Engram not available. Running in degraded mode — no persistent memory, no resume capability. Run `aryflow setup` to install."
 
-1. `mem_session_start(project: "{project}", description: "Executing $ARGUMENTS")`
+1. **Create execution marker:** Run `mkdir -p .aryflow && touch .aryflow/.executing` — this tells the Stop hook we are mid-spec (blocks summary/knowledge agents during execution).
+2. `mem_session_start(project: "{project}", description: "Executing $ARGUMENTS")`
 2. `mem_search("{project}/$ARGUMENTS/spec")` → `mem_get_observation(id)` — load spec
 3. `mem_search("{project}/$ARGUMENTS/progress")` — check for prior progress (enables resume)
 4. `mem_context("{project}")` — load project knowledge
@@ -170,8 +171,9 @@ Invoke `superpowers:finishing-a-development-branch` to decide: merge to main, cr
 ### Step 5: Commit and PR
 Run `/commit` followed by `/pr` to create the pull request.
 
-### Step 6: Session cleanup
-Do NOT call `mem_session_summary()` or `mem_session_end()` — the Stop hook handles session cleanup via dual memory (claude-mem for summary, engram for discoveries).
+### Step 6: Mark spec completed and cleanup
+Run `rm -f .aryflow/.executing && touch .aryflow/.spec-completed` — this signals the Stop hook to trigger summary (claude-mem) and knowledge extraction (engram) on the next stop event.
+Do NOT call `mem_session_summary()` or `mem_session_end()` — the Stop hook handles session cleanup via dual memory.
 
 ---
 

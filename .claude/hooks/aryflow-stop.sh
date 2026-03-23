@@ -1,44 +1,37 @@
 #!/bin/bash
-# AryFlow Stop hook -- only triggers summary/knowledge agents when a spec just completed
-# Three states:
-#   1. Mid-spec (unchecked TODO items) → block agents
-#   2. Spec just completed (all TODO checked) → allow agents (summary + knowledge)
-#   3. No spec at all (normal conversation) → block agents (not needed)
+# AryFlow Stop hook -- only triggers summary/knowledge agents when execute-spec just finished
+# Uses .aryflow/.executing marker file to detect active spec execution
+#
+# States:
+#   1. .aryflow/.executing EXISTS → mid-spec execution → block agents
+#   2. .aryflow/.spec-completed EXISTS → spec just finished → allow agents, then cleanup marker
+#   3. Neither exists → normal conversation → block agents (not needed)
 
-HAS_SPEC=false
-MID_SPEC=false
+EXECUTING_MARKER=".aryflow/.executing"
+COMPLETED_MARKER=".aryflow/.spec-completed"
 
-for f in specifications/*/TODO.md; do
-  if [ -f "$f" ]; then
-    HAS_SPEC=true
-    if grep -q '^\s*- \[ \]' "$f" 2>/dev/null; then
-      MID_SPEC=true
-      break
-    fi
-  fi
-done
-
-if [ "$MID_SPEC" = true ]; then
-  # Active spec with pending tasks -- block everything
+if [ -f "$EXECUTING_MARKER" ]; then
+  # Active spec execution -- block everything
   cat <<'EOF'
 {
   "continue": false,
   "stopReason": "ARYFLOW: Mid-spec execution. Skipping summary and knowledge -- orchestrator handles progress."
 }
 EOF
-elif [ "$HAS_SPEC" = true ]; then
-  # Spec exists and all tasks done -- allow summary + knowledge extraction
+elif [ -f "$COMPLETED_MARKER" ]; then
+  # Spec just completed -- allow summary + knowledge extraction, cleanup marker
+  rm -f "$COMPLETED_MARKER"
   cat <<'EOF'
 {
   "systemMessage": "ARYFLOW: Spec completed. Saving summary to claude-mem and extracting knowledge to engram."
 }
 EOF
 else
-  # No spec -- normal conversation, don't waste agents
+  # Normal conversation -- don't waste agents
   cat <<'EOF'
 {
   "continue": false,
-  "stopReason": "ARYFLOW: No active spec. Skipping summary and knowledge agents."
+  "stopReason": "ARYFLOW: Normal conversation. Skipping summary and knowledge agents."
 }
 EOF
 fi

@@ -15,19 +15,13 @@ done
 if [ "$MID_SPEC" = true ]; then
   cat <<'EOF'
 {
-  "hookSpecificOutput": {
-    "hookEventName": "Stop",
-    "additionalContext": "ARYFLOW: execute-spec session detected (unchecked TODO items exist). Do NOT save a session summary — wave progress is already tracked by the orchestrator."
-  }
+  "systemMessage": "ARYFLOW: execute-spec session detected (unchecked TODO items exist). Do NOT save a session summary — wave progress is already tracked by the orchestrator."
 }
 EOF
 else
   cat <<'EOF'
 {
-  "hookSpecificOutput": {
-    "hookEventName": "Stop",
-    "additionalContext": "ARYFLOW SESSION END: The Stop hook agent handles dual memory cleanup. Session summaries go to claude-mem (HTTP API, chronological, no lifecycle tags). Discoveries that pass strict criteria get extracted to engram as [ACTIVE] knowledge entries with topic_key '{project}/knowledge/{category}'. All engram mem_save content MUST start with '[ACTIVE] YYYY-MM-DD — '."
-  }
+  "systemMessage": "ARYFLOW SESSION END: The Stop hook agent handles dual memory cleanup. Session summaries go to claude-mem (HTTP API, chronological, no lifecycle tags). Discoveries that pass strict criteria get extracted to engram as [ACTIVE] knowledge entries with topic_key '{project}/knowledge/{category}'. All engram mem_save content MUST start with '[ACTIVE] YYYY-MM-DD — '."
 }
 EOF
 fi

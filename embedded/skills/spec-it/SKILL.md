@@ -80,7 +80,10 @@ Before writing the spec, load accumulated project knowledge:
 
 > `{change}` is derived from the spec folder name (e.g., `agent-registry-phase1`).
 
-If engram returns empty for expected knowledge → try claude-mem semantic search as fallback, then save results to engram with correct topic key.
+**Dual memory read (always both, NOT fallback):**
+After loading from engram, ALSO search claude-mem for historical context:
+- `claude-mem search(query: "{change}", project: "{project}")` — finds prior work, discussions, decisions from past sessions
+- This is NOT a fallback — always query both systems. Engram has structured knowledge, claude-mem has historical narrative.
 
 If engram tools are not available, **warn the user**: "Engram not available. Run `aryflow setup` to install. Continuing without persistent memory — knowledge will not be saved." Proceed with local context only, but flag this as degraded mode.
 
@@ -213,6 +216,8 @@ Each wave header MUST include:
 
 ```markdown
 # TODO — {Feature Name}
+
+> **RULE: After completing a wave, mark tasks `[x]` IMMEDIATELY before doing anything else.**
 
 ## Wave 1 — {description} <!-- independent, branch -->
 - [ ] {task description}

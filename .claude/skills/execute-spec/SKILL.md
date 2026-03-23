@@ -35,7 +35,7 @@ After reading local files, load context from engram. **This step is MANDATORY if
 2. `mem_search("{project}/$ARGUMENTS/spec")` → `mem_get_observation(id)` — load spec
 3. `mem_search("{project}/$ARGUMENTS/progress")` — check for prior progress (enables resume)
 4. `mem_context("{project}")` — load project knowledge
-5. If engram returns empty for expected knowledge → try claude-mem semantic search as fallback, then save results to engram with correct topic key
+5. **Dual memory read (always both, NOT fallback):** After loading from engram, ALSO search claude-mem: `claude-mem search(query: "$ARGUMENTS", project: "{project}")` — finds historical context from past sessions. Always query both systems.
 
 > **Project detection:** `{project}` is auto-detected from git repo root directory name in lowercase kebab-case.
 

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Write",
+      "Edit",
+      "Read",
+      "Glob",
+      "Grep",
+      "Agent",
+      "Skill(update-config)",
+      "Bash(PATH=\"$HOME/.goenv/versions/1.22.4/bin:$PATH\" go build ./cmd/aryflow 2>&1)",
+      "Bash(PATH=\"$HOME/.goenv/versions/1.22.4/bin:$PATH\" go test ./internal/... -v)",
+      "Bash(PATH=\"$HOME/.goenv/versions/1.22.4/bin:$PATH\" go test ./internal/checks/ ./internal/doctor/ ./internal/init/ ./internal/setup/ ./internal/ui/ -v)",
+      "Bash(PATH=\"$HOME/.goenv/versions/1.22.4/bin:$PATH\" go test ./test/integration/ -v -timeout 120s -count=1 2>&1)",
+      "Bash(PATH=\"$HOME/.goenv/versions/1.22.4/bin:$PATH\" go test ./test/integration/ -v -timeout 120s)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(PATH=\"$HOME/.goenv/versions/1.22.4/bin:$PATH\" go build ./cmd/aryflow)"
+    ],
+    "defaultMode": "bypassPermissions"
+  }
+}

@@ -21,7 +21,7 @@ EOF
 else
   cat <<'EOF'
 {
-  "systemMessage": "ARYFLOW SESSION END: If engram is available, the Stop hook agent will handle session summary. No manual action needed."
+  "systemMessage": "ARYFLOW SESSION END: If engram is available, the Stop hook agent will handle session summary. REMINDER: All mem_save content MUST start with '[ACTIVE] YYYY-MM-DD — '. Search for and mark previous session summaries as [DEPRECATED] before saving a new one."
 }
 EOF
 fi

@@ -44,12 +44,48 @@ Do NOT save: summaries of what you did, progress updates (orchestrator handles t
 
 If engram is NOT available, warn: "Running in degraded mode. Run `aryflow setup` to install."
 
-## Knowledge Lifecycle
+## Knowledge Lifecycle (non-negotiable)
 
-- Mark entries with `[ACTIVE]` or `[DEPRECATED]` (always in English)
-- Recency wins: most recent `[ACTIVE]` entry takes precedence
+Every `mem_save` content MUST start with `[ACTIVE] YYYY-MM-DD — `. No exceptions.
+
+### Format
+
+```
+[ACTIVE] 2026-03-22 — {content here}
+```
+
+### When saving something that updates/replaces existing knowledge
+
+1. `mem_search` for the existing entry on the same topic
+2. `mem_update(id: old_id)` to prepend `[DEPRECATED] YYYY-MM-DD — Superseded by: {new_topic_key}\n` to the existing content
+3. `mem_save` the new entry with `[ACTIVE] YYYY-MM-DD — ` prefix
+
+### When reading from engram
+
+- IGNORE any entry whose content starts with `[DEPRECATED]`
+- When multiple `[ACTIVE]` entries exist for the same topic, the most recent date wins
 - Never delete `[ACTIVE]` entries
-- Run knowledge-gc agent at milestone boundaries
+
+### Examples
+
+Saving a new discovery:
+```
+mem_save(topic: "aryflow/knowledge/go-conventions",
+  content: "[ACTIVE] 2026-03-22 — Go 1.22 requires explicit loop variable capture in goroutines",
+  project: "aryflow")
+```
+
+Updating an existing entry (old_id = 42):
+```
+mem_update(id: 42)  → prepend "[DEPRECATED] 2026-03-22 — Superseded by: aryflow/knowledge/go-conventions\n"
+mem_save(topic: "aryflow/knowledge/go-conventions",
+  content: "[ACTIVE] 2026-03-22 — Go 1.23 no longer requires explicit loop variable capture",
+  project: "aryflow")
+```
+
+### Maintenance
+
+- Run knowledge-gc agent at milestone boundaries to clean up `[DEPRECATED]` entries
 
 ## Wave Execution
 

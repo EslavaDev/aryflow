@@ -99,10 +99,15 @@ RULES:
 
 **4. Merge and review checkpoint:** Launch the merge-wave agent (`.claude/agents/merge-wave.md`) to handle integration, conflict resolution, dependency installation, and verification. After it returns, present its summary. Stop on unresolved conflicts or verification failures.
 
-**5. Persist wave progress:** Update TODO.md (`[x]`), then save minimal progress checkpoint to engram:
+**5. Persist wave progress:** Update TODO.md (`[x]`), then save minimal progress checkpoint to engram. Mark the previous wave's progress as `[DEPRECATED]` first:
 ```
+# If previous wave progress exists:
+mem_search("{project}/$ARGUMENTS/progress") → get old_id
+mem_update(id: old_id) → prepend "[DEPRECATED] {date} — Superseded by: {project}/$ARGUMENTS/progress\n"
+
+# Save new progress:
 mem_save(topic: "{project}/$ARGUMENTS/progress",
-  content: "Wave {N} complete. Tasks: {list of task slugs}. Next: Wave {N+1} or Done.",
+  content: "[ACTIVE] {date} — Wave {N} complete. Tasks: {list of task slugs}. Next: Wave {N+1} or Done.",
   project: "{project}")
 ```
 Commit: `feat({domain}): wave {N} — {brief description}`.

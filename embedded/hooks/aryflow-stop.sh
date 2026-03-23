@@ -26,7 +26,7 @@ else
 {
   "hookSpecificOutput": {
     "hookEventName": "Stop",
-    "additionalContext": "ARYFLOW SESSION END: The Stop hook agent will handle session summary. No manual action needed."
+    "additionalContext": "ARYFLOW SESSION END: The Stop hook agent will handle session summary. REMINDER: All mem_save content MUST start with '[ACTIVE] YYYY-MM-DD — '. Search for and mark previous session summaries as [DEPRECATED] before saving a new one."
   }
 }
 EOF

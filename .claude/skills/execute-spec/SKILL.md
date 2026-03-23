@@ -63,7 +63,7 @@ Organize tasks into waves of **4-6 agents maximum**. Present the wave breakdown 
 
 | Task Type | Model |
 |-----------|-------|
-| All wave execution | opus |
+| All wave execution | sonnet |
 
 **2. Each subagent receives this context:**
 

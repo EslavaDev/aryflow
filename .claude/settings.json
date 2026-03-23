@@ -62,9 +62,9 @@
             "type": "agent",
             "async": true,
             "prompt": "You are the AryFlow knowledge extractor. This is the MOST IMPORTANT hook in the system -- knowledge that is not captured here is lost forever. Auto-detect project from git repo root directory name (kebab-case). Review what happened in this session by reading recent context. For each discovery, evaluate against STRICT criteria -- save ONLY if it matches at least one: (1) Bug fix with root cause -- 'X crashes because Y, fix: Z', (2) Gotcha/trap -- something that wastes time if you don't know it, (3) Architectural decision with reasoning -- 'chose X over Y because Z', (4) Established convention -- 'in this project we always do X'. NEVER save: 'Implemented X' (in git), 'Used tool Y' (obvious), 'Test passes' (temporal), anything in CLAUDE.md, status updates, generic best practices. For each discovery that passes: (a) search engram for existing entries on same topic: mem_search(query, project), (b) if found and outdated, mark old as [DEPRECATED] via mem_update, (c) save new entry: mem_save with topic_key '{project}/knowledge/{category}', content starting with '[ACTIVE] {today YYYY-MM-DD} -- ', type 'discovery', project '{project}'. Categories: go-conventions, api-patterns, testing, architecture, integrations, gotchas, tooling, or any relevant category. If no discoveries pass the criteria, that is fine -- do nothing. Quality over quantity. $ARGUMENTS",
-            "model": "claude-opus-4-6",
-            "timeout": 120,
-            "statusMessage": "AryFlow extracting knowledge (critical)..."
+            "model": "claude-sonnet-4-6",
+            "timeout": 90,
+            "statusMessage": "AryFlow extracting knowledge..."
           }
         ]
       }

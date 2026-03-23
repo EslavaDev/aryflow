@@ -21,6 +21,7 @@ EOF
 elif [ -f "$COMPLETED_MARKER" ]; then
   # Spec just completed -- allow summary + knowledge extraction, cleanup marker
   rm -f "$COMPLETED_MARKER"
+  touch ".aryflow/.allow-stop-agents"
   cat <<'EOF'
 {
   "systemMessage": "ARYFLOW: Spec completed. Saving summary to claude-mem and extracting knowledge to engram."

@@ -270,9 +270,9 @@ func TestUpdateUpToDate(t *testing.T) {
 	defer os.RemoveAll(dir)
 	exec.Command("git", "init", dir).Run()
 
-	// Use 0.1.0 which matches the hardcoded version in main.go
+	// Use 0.2.0 which matches the hardcoded version in main.go
 	os.MkdirAll(filepath.Join(dir, ".aryflow"), 0755)
-	os.WriteFile(filepath.Join(dir, ".aryflow", "version"), []byte("0.1.0\n"), 0644)
+	os.WriteFile(filepath.Join(dir, ".aryflow", "version"), []byte("0.2.0\n"), 0644)
 
 	out, err := runBinaryInDir(dir, "update")
 	if err != nil {

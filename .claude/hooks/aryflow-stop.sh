@@ -21,7 +21,7 @@ EOF
 else
   cat <<'EOF'
 {
-  "systemMessage": "ARYFLOW SESSION END: If engram is available, the Stop hook agent will handle session summary. REMINDER: All mem_save content MUST start with '[ACTIVE] YYYY-MM-DD — '. Search for and mark previous session summaries as [DEPRECATED] before saving a new one. IMPORTANT: After saving the summary, extract any non-trivial Discoveries and save each as a SEPARATE [ACTIVE] knowledge entry with topic_key '{project}/knowledge/{category}'. These survive summary deprecation."
+  "systemMessage": "ARYFLOW SESSION END: The Stop hook agent handles dual memory cleanup. Session summaries go to claude-mem (HTTP API, chronological, no lifecycle tags). Discoveries that pass strict criteria get extracted to engram as [ACTIVE] knowledge entries with topic_key '{project}/knowledge/{category}'. All engram mem_save content MUST start with '[ACTIVE] YYYY-MM-DD — '."
 }
 EOF
 fi

@@ -30,20 +30,52 @@ Only brainstorming is optional. Everything else is mandatory:
 12. `superpowers:finishing-a-development-branch`
 13. `/commit` → `/pr`
 
-## Engram is Mandatory
+## Dual Memory System (non-negotiable)
 
-If engram MCP tools are available, you MUST use them:
-- `mem_save` for specs, tasks, and knowledge discoveries
-- If engram returns empty → try claude-mem as fallback
-- Session lifecycle (`mem_session_start`, `mem_session_summary`, `mem_session_end`) is handled by hooks — do NOT call these manually
+Two memory systems are ALWAYS active simultaneously. They are NOT fallbacks for each other — both serve distinct roles and both are always consulted.
 
-**Knowledge Save Criteria (STRICT) — save ONLY if it matches at least one:**
+### Engram — Knowledge
+
+Engram stores structured, curated knowledge with explicit lifecycle management.
+
+- **Writes:** Explicit via `mem_save`. Only knowledge that passes the strict save criteria below.
+- **Lifecycle:** Every entry MUST use `[ACTIVE]`/`[DEPRECATED]` markers (see Knowledge Lifecycle section).
+- **Content:** Specs, tasks, architectural decisions, bug root causes, conventions, gotchas.
+- **Session lifecycle:** `mem_session_start` and `mem_session_end` are handled by hooks — do NOT call these manually. Summaries go to claude-mem, NOT engram.
+
+### Claude-Mem — History
+
+Claude-mem provides automatic chronological capture and semantic search via HTTP API (ChromaDB-backed).
+
+- **Writes:** Automatic capture in background + session summaries via HTTP (`POST http://localhost:3100/api/sessions/summarize`).
+- **Lifecycle:** Chronological, NO `[ACTIVE]`/`[DEPRECATED]` tags. Entries are never deprecated — they form a timeline.
+- **Content:** Session summaries, work history, everything that happened.
+
+### Reading Flow (always both, NOT fallback)
+
+When searching for context, ALWAYS consult both systems:
+
+1. **Engram first** — search by topic key (`mem_search`, `mem_context`). This gives curated knowledge.
+2. **Claude-mem second** — search by semantic query (`search`). This gives historical context and work that may not have been explicitly saved.
+3. Both results are complementary. Engram gives you what the team decided is important. Claude-mem gives you what actually happened.
+
+### Writing Rules
+
+| What | Where | How |
+|------|-------|-----|
+| Knowledge discoveries | Engram | `mem_save` with `[ACTIVE]` prefix, strict criteria |
+| Session summaries | Claude-mem | HTTP API, automatic, no lifecycle tags |
+| Specs and tasks | Engram | `mem_save` with topic key |
+| Wave progress | Engram | `mem_save` with `[ACTIVE]` prefix |
+
+### Knowledge Save Criteria (STRICT) — save to engram ONLY if it matches at least one:
+
 1. Bug fix with root cause — "X crashes because Y, fix: Z"
 2. Gotcha/trap — something that wastes time if you don't know it
 3. Architectural decision with reasoning — "chose X over Y because Z"
 4. Established convention — "in this project we always do X"
 
-**NEVER save:**
+**NEVER save to engram:**
 - "Implemented X" (that's in git)
 - "Used tool Y" (obvious from code)
 - "Test passes" (temporal)
@@ -52,6 +84,10 @@ If engram MCP tools are available, you MUST use them:
 - Generic best practices everyone knows
 
 **Deduplication Rule:** Before saving, ask: "Is this a NEW discovery or decision that passes the criteria above?" If it's just a status update or summary of work done, do NOT save it. Each datum is saved in ONE place by ONE actor.
+
+### Discovery Extraction
+
+The Stop hook extracts discoveries from session summaries (claude-mem) and promotes qualifying ones to engram as permanent knowledge entries. This bridges the two systems: summaries live in claude-mem, but important discoveries get extracted into engram where they have proper lifecycle management.
 
 If engram is NOT available, warn: "Running in degraded mode. Run `aryflow setup` to install."
 

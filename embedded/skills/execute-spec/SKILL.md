@@ -76,6 +76,7 @@ CONTEXT:
 INSTRUCTIONS:
 1. Read the spec from engram: mem_search("{project}/$ARGUMENTS/spec") → mem_get_observation(id)
 2. Read project knowledge: mem_context("{project}")
+2b. Search claude-mem for historical context: claude-mem search(query: "{task description}", project: "{project}") — this is NOT fallback, always do both engram and claude-mem
 3. Read CLAUDE.md for project conventions
 4. Implement your specific task following the spec exactly
 5. Run verification commands from CLAUDE.md after implementation.

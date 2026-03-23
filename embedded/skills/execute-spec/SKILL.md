@@ -79,8 +79,15 @@ INSTRUCTIONS:
 3. Read CLAUDE.md for project conventions
 4. Implement your specific task following the spec exactly
 5. Run verification commands from CLAUDE.md after implementation.
-6. Save to engram ONLY if you discovered something new (pattern, decision, workaround, bug fix, convention):
-   mem_save(topic: "{project}/knowledge/{category}", content: "[ACTIVE] {date} — {discovery}", project: "{project}")
+6. Save to engram ONLY if your discovery passes ALL of these checks:
+   STRICT CRITERIA — matches at least one:
+   a) Bug fix with root cause — "X crashes because Y, fix: Z"
+   b) Gotcha/trap — something that wastes time if you don't know it
+   c) Architectural decision with reasoning — "chose X over Y because Z"
+   d) Established convention — "in this project we always do X"
+   NEVER save: "Implemented X" (in git), "Used tool Y" (obvious), "Test passes" (temporal),
+   anything in CLAUDE.md or derivable from code, status updates, generic best practices.
+   If it passes: mem_save(topic: "{project}/knowledge/{category}", content: "[ACTIVE] {date} — {discovery}", project: "{project}")
 7. If something contradicts existing knowledge:
    mem_update(id: {old_id}) → add [DEPRECATED] + supersedes reference
    mem_save new entry as [ACTIVE]

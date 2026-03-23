@@ -37,10 +37,21 @@ If engram MCP tools are available, you MUST use them:
 - If engram returns empty → try claude-mem as fallback
 - Session lifecycle (`mem_session_start`, `mem_session_summary`, `mem_session_end`) is handled by hooks — do NOT call these manually
 
-Save ONLY: technical discoveries, decisions, bug root causes, conventions.
-Do NOT save: summaries of what you did, progress updates (orchestrator handles these), duplicate information.
+**Knowledge Save Criteria (STRICT) — save ONLY if it matches at least one:**
+1. Bug fix with root cause — "X crashes because Y, fix: Z"
+2. Gotcha/trap — something that wastes time if you don't know it
+3. Architectural decision with reasoning — "chose X over Y because Z"
+4. Established convention — "in this project we always do X"
 
-**Deduplication Rule:** Before saving, ask: "Is this a NEW discovery or decision?" If it's just a status update or summary of work done, do NOT save it. Each datum is saved in ONE place by ONE actor.
+**NEVER save:**
+- "Implemented X" (that's in git)
+- "Used tool Y" (obvious from code)
+- "Test passes" (temporal)
+- Anything already in CLAUDE.md or derivable from code
+- Status updates or progress reports
+- Generic best practices everyone knows
+
+**Deduplication Rule:** Before saving, ask: "Is this a NEW discovery or decision that passes the criteria above?" If it's just a status update or summary of work done, do NOT save it. Each datum is saved in ONE place by ONE actor.
 
 If engram is NOT available, warn: "Running in degraded mode. Run `aryflow setup` to install."
 
@@ -88,9 +99,14 @@ mem_save(topic: "aryflow/knowledge/go-conventions",
 Session summaries mix temporal info (Goal, Accomplished) with permanent knowledge (Discoveries). When a summary is deprecated, the discoveries would be lost. To prevent this:
 
 1. The Stop hook agent saves the session summary as before (temporal, gets deprecated next session)
-2. After saving the summary, it extracts each non-trivial Discovery and saves it as a **separate** `[ACTIVE]` knowledge entry under `{project}/knowledge/{category}`
-3. These knowledge entries are **independent** — they survive even when the summary is deprecated
-4. Skip obvious or already-known discoveries to avoid duplication
+2. After saving the summary, it evaluates each Discovery against the **strict criteria checklist**:
+   - [ ] Is it a bug fix with root cause? ("X crashes because Y, fix: Z")
+   - [ ] Is it a gotcha/trap that wastes time if unknown?
+   - [ ] Is it an architectural decision with reasoning? ("chose X over Y because Z")
+   - [ ] Is it an established convention? ("in this project we always do X")
+   - If NONE checked → do NOT save. If at least one checked → save as `[ACTIVE]` knowledge entry.
+3. Also reject if it matches any NEVER-save rule: "Implemented X", "Used tool Y", "Test passes", anything in CLAUDE.md or derivable from code, status updates, generic best practices.
+4. These knowledge entries are **independent** — they survive even when the summary is deprecated
 
 Discovery categories use topic keys like:
 - `aryflow/knowledge/go-macos` — Go build issues, macOS gotchas

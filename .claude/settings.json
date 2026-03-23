@@ -47,15 +47,22 @@
       {
         "hooks": [
           {
-            "type": "agent",
-            "prompt": "You are the AryFlow session-end agent. The system uses DUAL MEMORY: engram for knowledge (with [ACTIVE]/[DEPRECATED] lifecycle) and claude-mem for historical summaries (chronological, no lifecycle tags). First, check if this session was running execute-spec by looking for TODO.md files with unchecked items in specifications/. If execute-spec was active (unchecked TODO items exist), do NOT save a session summary — the spec execution already saved progress. Only call mem_session_end. For non-spec sessions (general work, exploration, debugging): Step 1 — Save session summary to claude-mem via HTTP: Use Bash to run: curl -s -X POST http://localhost:37777/api/memory/save -H 'Content-Type: application/json' -d '{\"text\":\"## Session Summary\\n\\nGoal: ...\\nAccomplished: ...\\nDiscoveries: ...\\nRelevant Files: ...\",\"title\":\"Session summary: {project}\",\"project\":\"{project}\"}'. The summary should include: what was worked on, what was accomplished, discoveries, and relevant files. Project is auto-detected from git repo root directory name (kebab-case). Session summaries live in claude-mem (chronological history) — they do NOT need [ACTIVE]/[DEPRECATED] tags. Step 2 — Extract discoveries to engram: Review the session summary for discoveries. For each discovery, apply STRICT criteria — save ONLY if it matches at least one: (1) Bug fix with root cause — 'X crashes because Y, fix: Z', (2) Gotcha/trap — something that wastes time if you don't know it, (3) Architectural decision with reasoning — 'chose X over Y because Z', (4) Established convention — 'in this project we always do X'. NEVER save: 'Implemented X' (that's in git), 'Used tool Y' (obvious from code), 'Test passes' (temporal), anything already in CLAUDE.md or derivable from code, status updates or progress reports, generic best practices everyone knows. For each discovery that passes these criteria, save it as a SEPARATE [ACTIVE] knowledge entry in engram using mem_save with topic_key: '{project}/knowledge/{category}', content prefixed with '[ACTIVE] {today's date in YYYY-MM-DD} — '. Before saving, search engram for existing entries on the same topic and mark them as [DEPRECATED] using mem_update. These knowledge entries are permanent in engram and survive across sessions. Step 3 — Call mem_session_end. Be concise but capture all important context for future sessions. $ARGUMENTS",
-            "model": "claude-haiku-4-5-20251001",
-            "timeout": 45,
-            "statusMessage": "AryFlow saving session (claude-mem + engram)..."
-          },
-          {
             "type": "command",
             "command": "bash .claude/hooks/aryflow-stop.sh"
+          },
+          {
+            "type": "agent",
+            "prompt": "You are the AryFlow session summary agent. Auto-detect project name from git repo root directory name (kebab-case). Save a session summary to claude-mem: Use Bash to run curl -s -X POST http://localhost:37777/api/memory/save with JSON body containing text (Goal, Accomplished, Discoveries, Files), title ('Session summary: {project}'), and project. Then call mem_session_end to close the engram session. $ARGUMENTS",
+            "model": "claude-sonnet-4-6",
+            "timeout": 60,
+            "statusMessage": "AryFlow saving summary to claude-mem..."
+          },
+          {
+            "type": "agent",
+            "prompt": "You are the AryFlow knowledge extractor. Review what happened in this session. Look for discoveries that match STRICT criteria: (1) Bug fix with root cause, (2) Gotcha/trap that wastes time if unknown, (3) Architectural decision with reasoning, (4) Established convention. NEVER save: implementation status, tool usage, test results, anything in CLAUDE.md, or generic best practices. For each discovery that passes, save it to engram with mem_save using topic_key '{project}/knowledge/{category}' and content starting with '[ACTIVE] {today YYYY-MM-DD} -- '. Auto-detect project from git root. If no discoveries pass the criteria, do nothing -- that is fine. $ARGUMENTS",
+            "model": "claude-sonnet-4-6",
+            "timeout": 60,
+            "statusMessage": "AryFlow extracting knowledge..."
           }
         ]
       }

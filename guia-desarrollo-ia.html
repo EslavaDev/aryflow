@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AryFlow — Desarrollo con IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Alexandria',sans-serif;background:#061b2b;color:#fff;overflow-x:hidden;overflow-y:hidden;height:100vh;width:100vw;}
+
+  /* ── HORIZONTAL SCROLL CONTAINER ── */
+  .deck{display:flex;height:100vh;width:max-content;transition:transform 0.7s cubic-bezier(.4,.0,.2,1);}
+  .slide{width:100vw;height:100vh;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:3rem;}
+
+  /* ── BACKGROUND EFFECTS ── */
+  .slide::before{content:'';position:absolute;border-radius:50%;background:#00B7FF;filter:blur(120px);opacity:0;animation:blobIn 1.2s ease forwards;animation-delay:0.3s;}
+  .slide:nth-child(odd)::before{width:500px;height:500px;top:-150px;right:-100px;}
+  .slide:nth-child(even)::before{width:400px;height:400px;bottom:-120px;left:-80px;}
+  @keyframes blobIn{to{opacity:0.06;}}
+
+  .slide::after{content:'';position:absolute;width:300px;height:300px;border-radius:50%;border:1px solid #00B7FF15;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);animation:ringPulse 3s ease-in-out infinite;animation-delay:1s;}
+  @keyframes ringPulse{0%{transform:translate(-50%,-50%) scale(0.5);opacity:0;}50%{opacity:1;}100%{transform:translate(-50%,-50%) scale(2.5);opacity:0;}}
+
+  /* ── PARTICLES ── */
+  .particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+  .particle{position:absolute;width:3px;height:3px;background:#00B7FF;border-radius:50%;opacity:0;animation:float 6s ease-in-out infinite;}
+  @keyframes float{0%{opacity:0;transform:translateY(100vh) scale(0);}20%{opacity:0.6;}80%{opacity:0.3;}100%{opacity:0;transform:translateY(-20vh) scale(1);}}
+
+  /* ── SLIDE CONTENT ── */
+  .slide-inner{max-width:1100px;width:100%;position:relative;z-index:2;}
+  .slide-inner.center{text-align:center;display:flex;flex-direction:column;align-items:center;}
+
+  /* ── ANIMATIONS ── */
+  .reveal{opacity:0;transform:translateY(30px);transition:all 0.8s cubic-bezier(.4,.0,.2,1);}
+  .reveal.visible{opacity:1;transform:translateY(0);}
+  .reveal-left{opacity:0;transform:translateX(-50px);transition:all 0.8s cubic-bezier(.4,.0,.2,1);}
+  .reveal-left.visible{opacity:1;transform:translateX(0);}
+  .reveal-right{opacity:0;transform:translateX(50px);transition:all 0.8s cubic-bezier(.4,.0,.2,1);}
+  .reveal-right.visible{opacity:1;transform:translateX(0);}
+  .reveal-scale{opacity:0;transform:scale(0.8);transition:all 0.8s cubic-bezier(.4,.0,.2,1);}
+  .reveal-scale.visible{opacity:1;transform:scale(1);}
+  .stagger-1{transition-delay:0.1s;}
+  .stagger-2{transition-delay:0.2s;}
+  .stagger-3{transition-delay:0.3s;}
+  .stagger-4{transition-delay:0.4s;}
+  .stagger-5{transition-delay:0.5s;}
+  .stagger-6{transition-delay:0.6s;}
+  .stagger-7{transition-delay:0.7s;}
+  .stagger-8{transition-delay:0.8s;}
+
+  /* ── TYPOGRAPHY ── */
+  .slide-num{font-size:120px;font-weight:800;color:#00B7FF08;position:absolute;top:-20px;left:-10px;line-height:1;pointer-events:none;}
+  .slide-tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:3px;color:#00B7FF;margin-bottom:12px;}
+  .slide-title{font-size:38px;font-weight:700;line-height:1.2;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,#8ca3b8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .slide-subtitle{font-size:15px;color:#8ca3b8;line-height:1.7;max-width:650px;font-weight:300;}
+
+  /* ── BADGES ── */
+  .badges{display:flex;gap:10px;justify-content:center;margin-top:1.5rem;flex-wrap:wrap;}
+  .badge{font-size:12px;padding:6px 18px;border-radius:24px;font-weight:400;backdrop-filter:blur(10px);}
+  .b-green{background:#00c85318;color:#00c853;border:1px solid #00c85333;}
+  .b-blue{background:#00B7FF18;color:#00B7FF;border:1px solid #00B7FF33;}
+  .b-gray{background:#ffffff0a;color:#8ca3b8;border:1px solid #ffffff18;}
+  .b-orange{background:#FF996618;color:#FF9966;border:1px solid #FF996633;}
+  .b-purple{background:#7c4dff18;color:#b388ff;border:1px solid #7c4dff33;}
+
+  /* ── MILESTONE CARDS ── */
+  .milestones-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:1rem;width:100%;}
+  .m-card{background:#ffffff08;border:1px solid #ffffff12;border-radius:14px;padding:1.1rem 1.3rem;display:flex;align-items:flex-start;gap:12px;backdrop-filter:blur(10px);transition:all 0.3s ease;}
+  .m-card:hover{background:#ffffff12;border-color:#00B7FF33;transform:translateY(-2px);box-shadow:0 8px 30px #00B7FF10;}
+  .m-icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#00B7FF,#0077aa);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .m-icon::after{content:'';display:block;width:5px;height:9px;border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(45deg) translate(-1px,-1px);}
+  .m-title{font-size:13px;font-weight:600;color:#fff;line-height:1.4;}
+  .m-desc{font-size:11.5px;color:#6a8aa8;margin-top:3px;line-height:1.5;}
+
+  /* ── STATS ── */
+  .stats-row{display:flex;gap:20px;margin-top:2rem;justify-content:center;flex-wrap:wrap;}
+  .stat-box{text-align:center;min-width:140px;}
+  .stat-val{font-size:48px;font-weight:800;line-height:1;background:linear-gradient(135deg,#00B7FF,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .stat-val.green{background:linear-gradient(135deg,#00c853,#69f0ae);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .stat-val.orange{background:linear-gradient(135deg,#FF9966,#ffcc80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .stat-val.gray{background:linear-gradient(135deg,#8ca3b8,#b0c4d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .stat-lbl{font-size:12px;color:#6a8aa8;margin-top:6px;font-weight:300;}
+
+  /* ── FLOW ── */
+  .flow-pipeline{display:flex;align-items:center;justify-content:center;gap:0;margin:2rem 0 1rem;width:100%;}
+  .flow-node{background:#ffffff08;border:1.5px solid #ffffff15;border-radius:12px;padding:1rem 1.4rem;text-align:center;min-width:130px;backdrop-filter:blur(10px);transition:all 0.3s ease;}
+  .flow-node:hover{background:#ffffff12;border-color:#00B7FF44;transform:scale(1.05);}
+  .flow-node.active{background:linear-gradient(135deg,#00B7FF22,#0077aa22);border-color:#00B7FF66;}
+  .flow-node-label{font-size:13px;font-weight:600;color:#fff;}
+  .flow-node-sub{font-size:10.5px;color:#6a8aa8;margin-top:4px;}
+  .flow-arrow{color:#00B7FF;font-size:20px;padding:0 8px;opacity:0.5;}
+  .flow-arrow.pulse{animation:arrowPulse 2s ease-in-out infinite;}
+  @keyframes arrowPulse{0%,100%{opacity:0.3;transform:translateX(0);}50%{opacity:0.8;transform:translateX(3px);}}
+
+  /* ── TECH PILLS ── */
+  .tech-pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:1.5rem 0;}
+  .t-pill{font-size:12px;font-weight:600;padding:7px 18px;border-radius:8px;transition:all 0.3s ease;}
+  .t-pill:hover{transform:translateY(-2px);}
+  .t-primary{background:linear-gradient(135deg,#00B7FF,#0077aa);color:#fff;box-shadow:0 4px 15px #00B7FF30;}
+  .t-secondary{background:#ffffff08;color:#00B7FF;border:1px solid #00B7FF33;}
+
+  /* ── NEXT STEPS ── */
+  .next-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:1.5rem;width:100%;max-width:800px;}
+  .next-card{background:#ffffff06;border:1px solid #ffffff12;border-radius:14px;padding:1.2rem 1.4rem;transition:all 0.3s ease;position:relative;overflow:hidden;}
+  .next-card:hover{background:#ffffff10;border-color:#ffffff22;transform:translateY(-2px);}
+  .next-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,#00B7FF,transparent);border-radius:3px 0 0 3px;}
+  .next-title{font-size:13.5px;font-weight:600;color:#fff;margin-bottom:4px;}
+  .next-desc{font-size:12px;color:#6a8aa8;line-height:1.6;}
+
+  /* ── NOTE ── */
+  .glass-note{background:#FF996612;border:1px solid #FF996633;border-radius:12px;padding:1rem 1.4rem;margin-top:1.5rem;max-width:700px;}
+  .glass-note p{font-size:13px;color:#ffcc80;line-height:1.6;}
+  .glass-note strong{color:#FF9966;}
+  .glass-note-blue{background:#00B7FF0a;border:1px solid #00B7FF22;border-radius:12px;padding:1rem 1.4rem;margin-top:1.2rem;max-width:700px;}
+  .glass-note-blue p{font-size:13px;color:#8cbfdb;line-height:1.6;}
+  .glass-note-blue strong{color:#00B7FF;}
+
+  /* ── CODE BLOCK ── */
+  .code-block{background:#0a1f30;border:1px solid #ffffff12;border-radius:12px;padding:1.2rem 1.5rem;text-align:left;max-width:750px;width:100%;margin-top:1rem;font-family:'Courier New',monospace;font-size:12px;line-height:1.8;color:#8cbfdb;overflow-x:auto;}
+  .code-block .cmd{color:#00B7FF;font-weight:600;}
+  .code-block .arrow{color:#00c853;}
+  .code-block .comment{color:#6a8aa8;font-style:italic;}
+  .code-block .highlight{color:#fff;font-weight:600;}
+
+  /* ── TABLE ── */
+  .data-table{width:100%;max-width:800px;border-collapse:collapse;margin-top:1rem;}
+  .data-table th{text-align:left;font-size:11px;font-weight:600;color:#00B7FF;text-transform:uppercase;letter-spacing:1px;padding:8px 12px;border-bottom:1px solid #ffffff18;}
+  .data-table td{font-size:12px;color:#8ca3b8;padding:8px 12px;border-bottom:1px solid #ffffff08;}
+  .data-table tr:hover td{background:#ffffff06;}
+  .data-table code{font-family:'Courier New',monospace;font-size:11px;color:#00e5ff;background:#00B7FF12;padding:2px 6px;border-radius:4px;}
+
+  /* ── SECURITY GRID ── */
+  .security-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:1rem;width:100%;}
+  .sec-card{background:#ffffff08;border:1px solid #ffffff12;border-radius:12px;padding:0.8rem 1rem;display:flex;align-items:flex-start;gap:10px;backdrop-filter:blur(10px);transition:all 0.3s ease;}
+  .sec-card:hover{background:#ffffff12;border-color:#00B7FF33;transform:translateY(-2px);}
+  .sec-num{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#00B7FF,#0077aa);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:#fff;}
+  .sec-text{font-size:12px;color:#b0c4d8;line-height:1.4;font-weight:400;}
+
+  /* ── CAPABILITY CARDS ── */
+  .cap-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:1rem;width:100%;max-width:800px;}
+  .cap-card{background:#ffffff08;border:1px solid #ffffff12;border-radius:14px;padding:1rem 1.2rem;text-align:left;transition:all 0.3s ease;display:flex;flex-direction:column;gap:6px;}
+  .cap-card:hover{background:#ffffff12;border-color:#00B7FF33;transform:translateY(-2px);}
+
+  /* ── WEEK CARDS ── */
+  .weeks{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:1.5rem;width:100%;}
+  .week-card{border-radius:14px;padding:1.3rem 1.5rem;border:1px solid;backdrop-filter:blur(10px);}
+  .week-card.w1{background:#ffffff06;border-color:#ffffff12;}
+  .week-card.w2{background:#00B7FF08;border-color:#00B7FF22;}
+  .week-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;}
+  .w1 .week-label{color:#8ca3b8;}
+  .w2 .week-label{color:#00B7FF;}
+  .week-text{font-size:13.5px;color:#8ca3b8;line-height:1.7;}
+
+  /* ── NAV ── */
+  .nav{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:100;background:#0a2540cc;backdrop-filter:blur(20px);padding:8px 16px;border-radius:40px;border:1px solid #ffffff15;}
+  .nav-dot{width:10px;height:10px;border-radius:50%;background:#ffffff20;cursor:pointer;transition:all 0.3s ease;}
+  .nav-dot.active{background:#00B7FF;box-shadow:0 0 12px #00B7FF80;width:28px;border-radius:5px;}
+  .nav-dot:hover{background:#ffffff40;}
+
+  .nav-arrows{position:fixed;top:50%;z-index:100;transform:translateY(-50%);}
+  .nav-arr{width:44px;height:44px;border-radius:50%;background:#0a254099;backdrop-filter:blur(10px);border:1px solid #ffffff15;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease;}
+  .nav-arr:hover{background:#00B7FF33;border-color:#00B7FF55;transform:scale(1.1);}
+  .arr-left{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:100;}
+  .arr-right{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:100;}
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#00B7FF,#00e5ff);z-index:200;transition:width 0.7s cubic-bezier(.4,.0,.2,1);}
+
+  /* ── SLIDE COUNTER ── */
+  .slide-counter{position:fixed;top:24px;right:30px;font-size:12px;color:#ffffff40;z-index:100;font-weight:300;letter-spacing:1px;}
+
+  /* ── KIWI LOGO FIXED ── */
+  .logo-fixed{position:fixed;top:20px;left:30px;z-index:100;opacity:0.7;transition:opacity 0.3s ease;}
+  .logo-fixed:hover{opacity:1;}
+
+  /* ── ANIMATED COUNTER ── */
+  .count-up{display:inline-block;}
+
+  /* ── QUOTE CARD ── */
+  .quote-card{background:linear-gradient(135deg,#00B7FF10,#0077aa08);border:1px solid #00B7FF22;border-radius:16px;padding:2rem 2.5rem;max-width:700px;text-align:center;position:relative;overflow:hidden;margin-top:1.5rem;}
+  .quote-card::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:#00B7FF;opacity:0.04;}
+  .quote-text{font-size:16px;font-weight:300;color:#fff;line-height:1.8;font-style:italic;}
+  .quote-attr{font-size:12px;color:#6a8aa8;margin-top:10px;}
+
+  /* ── THREE COL GRID ── */
+  .three-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:1.5rem;width:100%;}
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:900px){
+    .milestones-grid,.weeks,.next-grid{grid-template-columns:1fr;}
+    .slide-title{font-size:28px;}
+    .slide{padding:2rem 1.5rem;}
+    .stats-row{gap:12px;}
+    .stat-val{font-size:36px;}
+    .flow-pipeline{flex-wrap:wrap;gap:8px;}
+    .flow-arrow{display:none;}
+    .security-grid,.three-grid{grid-template-columns:1fr;}
+    .cap-grid{grid-template-columns:1fr;}
+    .code-block{font-size:10px;}
+    .data-table{font-size:10px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar" id="progressBar" style="width:5.88%"></div>
+
+<!-- LOGO -->
+<img class="logo-fixed" src="https://cdn.prod.website-files.com/68c464854b74ac4e1a8fbdb7/68ca5e45ea000f101e9f5fc7_kiwi_logo.eef31d27.svg" alt="Kiwi" style="height:32px;">
+
+<!-- SLIDE COUNTER -->
+<div class="slide-counter" id="slideCounter">01 / 17</div>
+
+<!-- NAV ARROWS -->
+<button class="nav-arr arr-left" onclick="goSlide(current-1)">&#8592;</button>
+<button class="nav-arr arr-right" onclick="goSlide(current+1)">&#8594;</button>
+
+<!-- NAV DOTS -->
+<div class="nav" id="navDots">
+  <div class="nav-dot active" onclick="goSlide(0)"></div>
+  <div class="nav-dot" onclick="goSlide(1)"></div>
+  <div class="nav-dot" onclick="goSlide(2)"></div>
+  <div class="nav-dot" onclick="goSlide(3)"></div>
+  <div class="nav-dot" onclick="goSlide(4)"></div>
+  <div class="nav-dot" onclick="goSlide(5)"></div>
+  <div class="nav-dot" onclick="goSlide(6)"></div>
+  <div class="nav-dot" onclick="goSlide(7)"></div>
+  <div class="nav-dot" onclick="goSlide(8)"></div>
+  <div class="nav-dot" onclick="goSlide(9)"></div>
+  <div class="nav-dot" onclick="goSlide(10)"></div>
+  <div class="nav-dot" onclick="goSlide(11)"></div>
+  <div class="nav-dot" onclick="goSlide(12)"></div>
+  <div class="nav-dot" onclick="goSlide(13)"></div>
+  <div class="nav-dot" onclick="goSlide(14)"></div>
+  <div class="nav-dot" onclick="goSlide(15)"></div>
+  <div class="nav-dot" onclick="goSlide(16)"></div>
+</div>
+
+<!-- DECK -->
+<div class="deck" id="deck">
+
+  <!-- ═══ SLIDE 0: HERO ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-0"></div>
+    <div class="slide-inner center">
+      <img src="https://cdn.prod.website-files.com/68c464854b74ac4e1a8fbdb7/68ca5e45ea000f101e9f5fc7_kiwi_logo.eef31d27.svg" alt="Kiwi" style="height:64px;" class="reveal stagger-1">
+      <div style="height:24px"></div>
+      <div class="slide-tag reveal stagger-2">Metodologia de Desarrollo · Kiwi Financial Group</div>
+      <h1 class="slide-title reveal stagger-3" style="font-size:52px;max-width:750px;">AryFlow</h1>
+      <p class="slide-subtitle reveal stagger-4">Sistema integrado de desarrollo con IA</p>
+      <p class="slide-subtitle reveal stagger-5" style="font-size:13px;color:#6a8aa8;margin-top:8px;">Creado por Alejandro Eslava</p>
+      <div class="badges reveal stagger-6">
+        <span class="badge b-green">Engram -- Base de Conocimiento</span>
+        <span class="badge b-blue">Claude-Mem -- Memoria Historica</span>
+        <span class="badge b-gray">Superpowers -- Skills de Desarrollo</span>
+        <span class="badge b-gray">Project-Agnostic</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 1: POR QUE ESTE SISTEMA ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-1"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">01</div>
+      <div class="slide-tag reveal">Resumen Ejecutivo</div>
+      <h2 class="slide-title reveal stagger-1">Por que este sistema</h2>
+      <p class="slide-subtitle reveal stagger-2">Features que tomarian dias se completan en horas, con mayor consistencia y sin perdida de contexto entre sesiones.</p>
+
+      <div class="stats-row reveal stagger-3">
+        <div class="stat-box">
+          <div class="stat-val" style="font-size:42px;">60-70%</div>
+          <div class="stat-lbl">Reduccion de tiempo</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val green" style="font-size:42px;">~70%</div>
+          <div class="stat-lbl">Ahorro en costos IA</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val orange" style="font-size:42px;">0%</div>
+          <div class="stat-lbl">Contexto perdido</div>
+        </div>
+      </div>
+
+      <div class="next-grid reveal stagger-4" style="margin-top:2rem;">
+        <div class="next-card">
+          <div class="next-title">Velocidad</div>
+          <div class="next-desc">Multiples agentes trabajan simultaneamente, reduciendo tiempos de desarrollo drasticamente.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-title">Calidad</div>
+          <div class="next-desc">Se escribe una especificacion antes de tocar codigo. Cada agente sigue esa especificacion.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-title">Retencion de conocimiento</div>
+          <div class="next-desc">Decisiones arquitectonicas, patrones y convenciones almacenados permanentemente.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-title">Resiliencia</div>
+          <div class="next-desc">Si una sesion se interrumpe, la siguiente retoma exactamente donde quedo.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 2: LOS 4 PRINCIPIOS ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-2"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">02</div>
+      <div class="slide-tag reveal">Fundamentos</div>
+      <h2 class="slide-title reveal stagger-1">Los 4 Principios</h2>
+      <p class="slide-subtitle reveal stagger-2">El ciclo completo de desarrollo sigue cuatro principios fundamentales que garantizan calidad y eficiencia.</p>
+
+      <div class="flow-pipeline reveal stagger-3">
+        <div class="flow-node active">
+          <div class="flow-node-label">Pensar</div>
+          <div class="flow-node-sub">Spec antes de codigo</div>
+        </div>
+        <div class="flow-arrow pulse">&#8594;</div>
+        <div class="flow-node active">
+          <div class="flow-node-label">Recordar</div>
+          <div class="flow-node-sub">Memoria dual</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.3s;">&#8594;</div>
+        <div class="flow-node active">
+          <div class="flow-node-label">Paralelo</div>
+          <div class="flow-node-sub">Waves de agentes</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.6s;">&#8594;</div>
+        <div class="flow-node active">
+          <div class="flow-node-label">Revisar</div>
+          <div class="flow-node-sub">Checkpoints</div>
+        </div>
+      </div>
+
+      <div class="milestones-grid reveal stagger-4">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">1. Pensar primero</div>
+            <div class="m-desc">Brainstorming y especificacion antes de escribir una sola linea. SPEC.md + TODO.md compartidos por todos los agentes.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">2. Recordar todo</div>
+            <div class="m-desc">Engram (explicito) + Claude-Mem (automatico). Las decisiones de enero estan disponibles en marzo.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">3. Trabajar en paralelo</div>
+            <div class="m-desc">Tareas agrupadas en "waves" segun grafo de dependencias. Waves independientes corren en paralelo, cada agente en su propia copia aislada.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">4. Revisar siempre</div>
+            <div class="m-desc">Checkpoint obligatorio despues de cada wave. Solo se avanza tras pasar la revision.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 3: MEMORIA DUAL — ENGRAM ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-3"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">03</div>
+      <div class="slide-tag reveal">Sistema de Memoria</div>
+      <h2 class="slide-title reveal stagger-1">Engram -- Base de conocimiento</h2>
+      <p class="slide-subtitle reveal stagger-2">Conocimiento curado y estructurado con gestion de ciclo de vida. Solo se guarda lo que pasa criterios estrictos.</p>
+
+      <div class="milestones-grid reveal stagger-3" style="max-width:800px;">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Escritura explicita con criterios</div>
+            <div class="m-desc">Solo se guarda: bug fixes con root cause, gotchas, decisiones arquitectonicas, convenciones establecidas.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Lifecycle [ACTIVE] / [DEPRECATED]</div>
+            <div class="m-desc">Cada entrada tiene estado. Cuando algo cambia, la antigua se marca [DEPRECATED] y se crea una nueva [ACTIVE].</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">13 herramientas MCP</div>
+            <div class="m-desc">mem_save, mem_search, mem_context, mem_update, mem_delete, mem_timeline, mem_stats y mas.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Topic keys estructurados</div>
+            <div class="m-desc">Formato: {proyecto}/{cambio}/{artefacto}. Cada entrada tiene un titulo que permite encontrarla.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-note-blue reveal stagger-4">
+        <p><strong>Uso tipico:</strong> "Buscar la especificacion del Agent Registry" &#8594; mem_search("kiwi-nexus/agent-registry/spec") &#8594; Resultado exacto.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 4: MEMORIA DUAL — CLAUDE-MEM ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-4"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">04</div>
+      <div class="slide-tag reveal">Sistema de Memoria</div>
+      <h2 class="slide-title reveal stagger-1">Claude-Mem -- Memoria historica</h2>
+      <p class="slide-subtitle reveal stagger-2">Captura automatica cronologica + resumenes de sesion via HTTP API. Busqueda semantica con ChromaDB.</p>
+
+      <div class="milestones-grid reveal stagger-3" style="max-width:800px;">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Captura automatica + resumenes HTTP</div>
+            <div class="m-desc">Captura en segundo plano. Los resumenes de sesion se envian via HTTP API al Stop hook. Sin lifecycle tags.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Busqueda semantica (ChromaDB)</div>
+            <div class="m-desc">"Que decidimos sobre autenticacion?" — busca por significado, no por clave exacta. Embeddings vectoriales.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Cronologica, sin deprecacion</div>
+            <div class="m-desc">Las entradas forman una linea de tiempo. No usan [ACTIVE]/[DEPRECATED] -- eso es exclusivo de engram.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Extraccion de descubrimientos</div>
+            <div class="m-desc">El Stop hook extrae descubrimientos de resumenes y los promueve a engram como entradas [ACTIVE] permanentes.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-note-blue reveal stagger-4">
+        <p><strong>Siempre ambos, no fallback:</strong> Engram primero (conocimiento curado), Claude-Mem segundo (historia). Ambos se consultan siempre.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 5: CONVENCION DE TOPIC KEYS ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-5"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">05</div>
+      <div class="slide-tag reveal">Organizacion</div>
+      <h2 class="slide-title reveal stagger-1">Convencion de Topic Keys</h2>
+      <p class="slide-subtitle reveal stagger-2">Toda entrada en engram sigue un formato estructurado que permite encontrar cualquier cosa de forma precisa.</p>
+
+      <div class="code-block reveal stagger-3" style="text-align:center;font-size:18px;padding:1.5rem;margin-bottom:1rem;">
+        <span class="cmd">{proyecto}</span> / <span class="highlight">{cambio}</span> / <span class="arrow">{artefacto}</span>
+      </div>
+
+      <table class="data-table reveal stagger-4">
+        <thead>
+          <tr>
+            <th>Artefacto</th>
+            <th>Topic Key</th>
+            <th>Uso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Exploracion</td>
+            <td><code>kiwi-nexus/agent-registry/explore</code></td>
+            <td>Brainstorming inicial</td>
+          </tr>
+          <tr>
+            <td>Especificacion</td>
+            <td><code>kiwi-nexus/agent-registry/spec</code></td>
+            <td>Spec completa del cambio</td>
+          </tr>
+          <tr>
+            <td>Tareas</td>
+            <td><code>kiwi-nexus/agent-registry/tasks</code></td>
+            <td>TODO desglosado</td>
+          </tr>
+          <tr>
+            <td>Progreso</td>
+            <td><code>kiwi-nexus/agent-registry/progress</code></td>
+            <td>Estado de ejecucion (resumable)</td>
+          </tr>
+          <tr>
+            <td>Patrones</td>
+            <td><code>kiwi-nexus/knowledge/patterns</code></td>
+            <td>Patrones descubiertos por agentes</td>
+          </tr>
+          <tr>
+            <td>Decisiones</td>
+            <td><code>kiwi-nexus/knowledge/decisions</code></td>
+            <td>Decisiones arquitectonicas</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="badges reveal stagger-5" style="margin-top:1.5rem;">
+        <span class="badge b-blue">Patrones</span>
+        <span class="badge b-green">Decisiones</span>
+        <span class="badge b-orange">Bugs</span>
+        <span class="badge b-gray">Convenciones</span>
+        <span class="badge b-purple">Integraciones</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 6: PROTECCION CONOCIMIENTO OBSOLETO ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-6"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">06</div>
+      <div class="slide-tag reveal">Gestion de Conocimiento</div>
+      <h2 class="slide-title reveal stagger-1">Proteccion contra Conocimiento Obsoleto</h2>
+      <p class="slide-subtitle reveal stagger-2">Sin una estrategia de gestion, las entradas contradictorias se apilan. Engram usa tres capas de proteccion (claude-mem es cronologico y no necesita gestion de obsolescencia).</p>
+
+      <div class="three-grid reveal stagger-3">
+        <div class="next-card">
+          <div class="next-title">Capa 1: Versionado con estado (engram)</div>
+          <div class="next-desc">Cada entrada en engram incluye [ACTIVE] o [DEPRECATED] con referencia a la que la reemplaza. Trazabilidad completa.</div>
+          <div style="margin-top:8px;">
+            <span class="badge b-green" style="font-size:10px;padding:3px 10px;">[ACTIVE]</span>
+            <span class="badge b-orange" style="font-size:10px;padding:3px 10px;">[DEPRECATED]</span>
+          </div>
+        </div>
+        <div class="next-card">
+          <div class="next-title">Capa 2: Regla de recencia</div>
+          <div class="next-desc">Cuando hay entradas en conflicto, la entrada [ACTIVE] mas reciente gana. Los agentes ignoran todas las entradas [DEPRECATED].</div>
+          <div style="margin-top:8px;">
+            <span class="badge b-blue" style="font-size:10px;padding:3px 10px;">Automatica</span>
+          </div>
+        </div>
+        <div class="next-card">
+          <div class="next-title">Capa 3: Limpieza periodica</div>
+          <div class="next-desc">Al final de cada hito: buscar [DEPRECATED], verificar reemplazo, eliminar permanentemente lo obsoleto.</div>
+          <div style="margin-top:8px;">
+            <span class="badge b-gray" style="font-size:10px;padding:3px 10px;">Por hito</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="quote-card reveal stagger-4">
+        <div class="quote-text">"El conocimiento no expira por tiempo. Expira por reemplazo."</div>
+        <div class="quote-attr">Una decision de hace 6 meses puede seguir vigente. No se borra por antiguedad, solo cuando algo la reemplaza.</div>
+      </div>
+
+      <div class="glass-note-blue reveal stagger-5" style="max-width:800px;margin-top:1rem;">
+        <p><strong>Limpieza periodica:</strong> Al final de cada hito mayor, el agente <strong>knowledge-gc</strong> busca entradas [DEPRECATED], verifica que la entrada que las reemplazo sigue [ACTIVE], y elimina las obsoletas permanentemente.</p>
+      </div>
+
+      <div class="m-desc reveal stagger-6" style="margin-top:8px;font-size:10.5px;color:#6a8aa8;">Nota: los marcadores se escriben siempre en ingles ([ACTIVE]/[DEPRECATED]) para consistencia entre agentes.</div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 7: FLUJO SDD — SPEC-IT ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-7"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">07</div>
+      <div class="slide-tag reveal">Flujo SDD</div>
+      <h2 class="slide-title reveal stagger-1">spec-it -- Especificacion</h2>
+      <p class="slide-subtitle reveal stagger-2">De una idea a un plan completo y compartido. Carga conocimiento previo antes de escribir una sola linea.</p>
+
+      <div class="flow-pipeline reveal stagger-3">
+        <div class="flow-node">
+          <div class="flow-node-label">Brainstorming</div>
+          <div class="flow-node-sub">Explorar el problema</div>
+        </div>
+        <div class="flow-arrow pulse">&#8594;</div>
+        <div class="flow-node active">
+          <div class="flow-node-label">spec-it</div>
+          <div class="flow-node-sub">Lee engram + claude-mem</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.3s;">&#8594;</div>
+        <div class="flow-node">
+          <div class="flow-node-label">SPEC.md</div>
+          <div class="flow-node-sub">Archivo local</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.6s;">&#8594;</div>
+        <div class="flow-node">
+          <div class="flow-node-label">TODO.md</div>
+          <div class="flow-node-sub">Tareas ordenadas</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.9s;">&#8594;</div>
+        <div class="flow-node">
+          <div class="flow-node-label">Memoria dual</div>
+          <div class="flow-node-sub">engram + claude-mem</div>
+        </div>
+      </div>
+
+      <div class="milestones-grid reveal stagger-4" style="max-width:800px;">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Carga conocimiento previo</div>
+            <div class="m-desc">Lee engram (conocimiento curado) y claude-mem (historial) antes de escribir. No re-descubre.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Archivos + Memoria dual</div>
+            <div class="m-desc">SPEC.md y TODO.md para humanos. Engram + claude-mem para agentes. Complementarios.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Review automatico</div>
+            <div class="m-desc">Revision del spec generado: gaps, consistencia, completitud.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Directorio dedicado</div>
+            <div class="m-desc">specifications/{cambio}/SPEC.md + TODO.md. Organizacion clara.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 8: FLUJO SDD — EXECUTE-SPEC ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-8"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">08</div>
+      <div class="slide-tag reveal">Flujo SDD</div>
+      <h2 class="slide-title reveal stagger-1">execute-spec -- Ejecucion</h2>
+      <p class="slide-subtitle reveal stagger-2">El TODO.md cobra vida. Agentes en paralelo, checkpoints de revision, progreso guardado y capacidad de reanudar.</p>
+
+      <div class="flow-pipeline reveal stagger-3">
+        <div class="flow-node">
+          <div class="flow-node-label">TODO.md</div>
+          <div class="flow-node-sub">+ Spec de engram/claude-mem</div>
+        </div>
+        <div class="flow-arrow pulse">&#8594;</div>
+        <div class="flow-node">
+          <div class="flow-node-label">Waves</div>
+          <div class="flow-node-sub">N agentes / wave</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.3s;">&#8594;</div>
+        <div class="flow-node active">
+          <div class="flow-node-label">Checkpoints</div>
+          <div class="flow-node-sub">Revision + merge</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.6s;">&#8594;</div>
+        <div class="flow-node">
+          <div class="flow-node-label">Progreso</div>
+          <div class="flow-node-sub">engram + claude-mem</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.9s;">&#8594;</div>
+        <div class="flow-node">
+          <div class="flow-node-label">Completo</div>
+          <div class="flow-node-sub">Verificacion final</div>
+        </div>
+      </div>
+
+      <div class="milestones-grid reveal stagger-4" style="max-width:800px;">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Deteccion de progreso previo</div>
+            <div class="m-desc">Si hubo interrupcion, busca progreso en engram + historial en claude-mem y retoma desde la ultima wave completada.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Agrupacion por dependencias</div>
+            <div class="m-desc">Tareas independientes van en la misma wave. Las dependientes esperan a waves posteriores.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Checkpoint obligatorio</div>
+            <div class="m-desc">Revision de cambios, merge de worktrees, verificacion de convenciones. Sin excepciones.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Resumable</div>
+            <div class="m-desc">Interrupcion en wave 3? La siguiente sesion retoma en wave 3. Cero trabajo perdido.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-note-blue reveal stagger-5" style="max-width:800px;margin-top:1rem;">
+        <p><strong>Memoria dual siempre activa:</strong> Progreso de waves y conocimiento curado van a engram. Datos de sesion e historial van a claude-mem. Ambos sistemas se consultan en paralelo -- engram para conocimiento, claude-mem para contexto historico.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 9: ORQUESTACION DE AGENTES ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-9"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">09</div>
+      <div class="slide-tag reveal">Ejecucion</div>
+      <h2 class="slide-title reveal stagger-1">Orquestacion de Agentes</h2>
+      <p class="slide-subtitle reveal stagger-2">N waves de agentes paralelos organizadas en un grafo de dependencias. Waves independientes corren en paralelo.</p>
+
+      <div class="flow-pipeline reveal stagger-3" style="margin-bottom:0.5rem;">
+        <div class="flow-node" style="min-width:100px;">
+          <div class="flow-node-label">Wave 1</div>
+          <div class="flow-node-sub">N agentes</div>
+        </div>
+        <div class="flow-arrow pulse">&#8594;</div>
+        <div class="flow-node" style="min-width:80px;background:#FF996612;border-color:#FF996633;">
+          <div class="flow-node-label" style="font-size:11px;">Check</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.2s;">&#8594;</div>
+        <div class="flow-node" style="min-width:100px;">
+          <div class="flow-node-label">Wave 2 + 3</div>
+          <div class="flow-node-sub">en paralelo</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.4s;">&#8594;</div>
+        <div class="flow-node" style="min-width:80px;background:#FF996612;border-color:#FF996633;">
+          <div class="flow-node-label" style="font-size:11px;">Check</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.6s;">&#8594;</div>
+        <div class="flow-node" style="min-width:100px;">
+          <div class="flow-node-label">Wave N</div>
+          <div class="flow-node-sub">...</div>
+        </div>
+      </div>
+
+      <div style="font-size:13px;font-weight:600;color:#fff;margin-top:1.5rem;margin-bottom:0.5rem;" class="reveal stagger-4">Asignacion de modelos</div>
+
+      <table class="data-table reveal stagger-4" style="max-width:700px;">
+        <thead>
+          <tr>
+            <th>Componente</th>
+            <th>Modelo</th>
+            <th>Nota</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Todas las waves (ejecucion)</td>
+            <td><span class="badge b-purple" style="font-size:10px;padding:2px 10px;">Opus</span></td>
+            <td>Brainstorming, spec, implementacion, tests, verificacion</td>
+          </tr>
+          <tr>
+            <td>Agente de merge</td>
+            <td><span class="badge b-purple" style="font-size:10px;padding:2px 10px;">Opus</span></td>
+            <td>Resolucion inteligente de conflictos</td>
+          </tr>
+          <tr>
+            <td>Agentes utilitarios</td>
+            <td><span class="badge b-blue" style="font-size:10px;padding:2px 10px;">Sonnet</span></td>
+            <td>post-spec-docs, knowledge-gc</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="glass-note-blue reveal stagger-5" style="margin-top:1rem;">
+        <p><strong>Grafo de dependencias:</strong> Si Wave 3 depende de Wave 1 (no de Wave 2), Wave 2 y Wave 3 corren en paralelo. Las waves no son una secuencia lineal, sino un grafo.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 10: EJEMPLO 1 — WORKFLOW COMPLETO ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-10"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">10</div>
+      <div class="slide-tag reveal stagger-1">Ejemplo practico</div>
+      <h2 class="slide-title reveal stagger-2">Flujo completo: de idea a PR</h2>
+      <p class="slide-subtitle reveal stagger-3" style="max-width:800px;">Cada comando que ejecutas y lo que sucede internamente</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:1.5rem;width:100%;" class="reveal stagger-4">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">1. /brainstorm</div>
+            <div class="m-desc">Explora el problema, genera exploracion, guarda en engram + claude-mem</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">2. /spec-it</div>
+            <div class="m-desc">SPEC.md + TODO.md + memoria dual + superpowers review</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">3. /execute-spec</div>
+            <div class="m-desc">Waves paralelas + merge-wave agent dedicado</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">4. Verificacion</div>
+            <div class="m-desc">superpowers: tests, spec match, sin regresiones</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">5. /simplify</div>
+            <div class="m-desc">Calidad, reutilizacion, eficiencia del codigo</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">6. post-spec-docs</div>
+            <div class="m-desc">Agente que actualiza documentacion automaticamente</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">7. finishing-a-dev-branch</div>
+            <div class="m-desc">superpowers: limpieza final del branch</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">8. /commit</div>
+            <div class="m-desc">Commit convencional con mensaje estructurado</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">9. /pr</div>
+            <div class="m-desc">PR con descripcion y checklist completo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 11: EJEMPLO 2 — REANUDAR TRABAJO ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-11"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">11</div>
+      <div class="slide-tag reveal">Ejemplo Practico</div>
+      <h2 class="slide-title reveal stagger-1">Retomar trabajo despues de una interrupcion</h2>
+      <p class="slide-subtitle reveal stagger-2">El sistema detecta progreso previo y reanuda exactamente donde se quedo. Sin repetir trabajo.</p>
+
+      <div class="code-block reveal stagger-3" style="max-width:800px;">
+        <span class="comment">Sesion anterior: se interrumpio en Wave 3 de 5</span><br><br>
+        <span class="cmd">&gt; /execute-spec</span> <span class="highlight">001-agent-registry</span><br><br>
+        <span class="arrow">&#8594;</span> Detecta progreso previo en engram + claude-mem<br>
+        <span class="arrow">&#8594;</span> <span class="highlight">"Reanudando desde Wave 3. Waves 1-2 completadas."</span><br>
+        <span class="arrow">&#8594;</span> Continua desde Wave 3 sin repetir trabajo<br>
+        <span class="arrow">&#8594;</span> Todo el conocimiento de Waves 1-2 disponible
+      </div>
+
+      <div class="milestones-grid reveal stagger-4" style="max-width:700px;margin-top:2rem;">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Progreso persistente</div>
+            <div class="m-desc">Despues de cada wave, el estado se guarda en engram y la sesion en claude-mem. Si la sesion muere, el progreso sobrevive.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Conocimiento acumulado</div>
+            <div class="m-desc">Los descubrimientos de waves anteriores estan disponibles. No se pierde contexto entre sesiones.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-note-blue reveal stagger-5">
+        <p><strong>Clave:</strong> La capacidad de reanudar es lo que hace viable trabajar en features grandes que exceden una sola sesion de IA.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 12: EJEMPLO 3 — CONOCIMIENTO ACUMULADO ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-12"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">12</div>
+      <div class="slide-tag reveal">Ejemplo Practico</div>
+      <h2 class="slide-title reveal stagger-1">El sistema aprende</h2>
+      <p class="slide-subtitle reveal stagger-2">Phase 2 sabe lo que Phase 1 descubrio. No hay re-descubrimiento. Cada fase construye sobre la anterior.</p>
+
+      <div class="weeks reveal stagger-3" style="max-width:800px;">
+        <div class="week-card w1">
+          <div class="week-label">Phase 1 (completada): Agent Registry Core</div>
+          <div class="week-text">Agentes descubrieron: mapped_column() pattern, API rate limits de ElevenLabs, module structure del proyecto, convenciones de rutas. Todo guardado en kiwi-nexus/knowledge/*</div>
+        </div>
+        <div class="week-card w2">
+          <div class="week-label">Phase 2 (nueva): Claude Text Runtime</div>
+          <div class="week-text">spec-it lee TODOS los conocimientos de Phase 1. Ya sabe el patron de modelos, las convenciones de rutas, los limites de API. No re-descubre -- construye sobre lo aprendido.</div>
+        </div>
+      </div>
+
+      <div class="code-block reveal stagger-4" style="max-width:800px;margin-top:1rem;">
+        <span class="cmd">&gt; /spec-it</span> <span class="highlight">claude-text-runtime</span><br><br>
+        <span class="arrow">&#8594;</span> spec-it lee TODOS los conocimientos de Phase 1<br>
+        <span class="arrow">&#8594;</span> Ya sabe: patron de modelos, convenciones de rutas, limites de API<br>
+        <span class="arrow">&#8594;</span> <span class="highlight">Spec es mas preciso y completo que el de Phase 1</span><br>
+        <span class="arrow">&#8594;</span> Construye sobre lo aprendido, no desde cero
+      </div>
+
+      <div class="glass-note reveal stagger-5">
+        <p><strong>Efecto compuesto:</strong> Cada feature completado hace al sistema mas inteligente. La curva de aprendizaje es ascendente, no plana.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 13: BRANCHES VS WORKTREES ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-13"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">13</div>
+      <div class="slide-tag reveal">Aislamiento</div>
+      <h2 class="slide-title reveal stagger-1">Branches y Worktrees</h2>
+      <p class="slide-subtitle reveal stagger-2">Branch es el modo por defecto. Worktree se usa para aislamiento por wave cuando hay ejecucion paralela.</p>
+
+      <div class="weeks reveal stagger-3" style="max-width:800px;">
+        <div class="week-card w2">
+          <div class="week-label">Branch (por defecto)</div>
+          <div class="week-text">Modo estandar. Un branch de desarrollo donde se trabaja secuencialmente. Simple, directo, suficiente para la mayoria de specs.</div>
+        </div>
+        <div class="week-card w1">
+          <div class="week-label">Git Worktree (aislamiento por wave)</div>
+          <div class="week-text">Cada wave recibe su propio worktree aislado. Los agentes dentro de una wave trabajan sobre esa copia. Al completar, se integra via merge agent.</div>
+        </div>
+      </div>
+
+      <div class="flow-pipeline reveal stagger-4">
+        <div class="flow-node">
+          <div class="flow-node-label">Branch principal</div>
+          <div class="flow-node-sub">Orquestador</div>
+        </div>
+        <div class="flow-arrow pulse">&#8594;</div>
+        <div class="flow-node" style="min-width:110px;">
+          <div class="flow-node-label">WT Wave 1</div>
+          <div class="flow-node-sub">3 agentes</div>
+        </div>
+        <div class="flow-node" style="min-width:110px;">
+          <div class="flow-node-label">WT Wave 2</div>
+          <div class="flow-node-sub">2 agentes</div>
+        </div>
+        <div class="flow-arrow pulse" style="animation-delay:0.6s;">&#8594;</div>
+        <div class="flow-node active">
+          <div class="flow-node-label">Merge</div>
+          <div class="flow-node-sub">merge-wave agent</div>
+        </div>
+      </div>
+
+      <div class="glass-note-blue reveal stagger-5">
+        <p><strong>Waves en paralelo:</strong> Si Wave 3 depende de Wave 1 (no de Wave 2), Wave 2 y Wave 3 corren en paralelo. El grafo de dependencias determina que puede ejecutarse simultaneamente.</p>
+      </div>
+
+      <div class="glass-note-blue reveal stagger-6" style="max-width:800px;margin-top:1rem;">
+        <p><strong>Agente de merge dedicado:</strong> Despues de cada wave, un agente especializado integra los worktrees. Lee el spec, resuelve conflictos automaticamente, instala dependencias una sola vez, y solo escala al desarrollador si el conflicto es ambiguo.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 14: HERRAMIENTAS Y CIERRE ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-14"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">14</div>
+      <div class="slide-tag reveal">Herramientas</div>
+      <h2 class="slide-title reveal stagger-1">Ecosistema de Herramientas</h2>
+      <p class="slide-subtitle reveal stagger-2">Skills de desarrollo + memoria dual. Todo integrado en un flujo cohesivo.</p>
+
+      <div class="milestones-grid reveal stagger-3" style="max-width:800px;">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">brainstorming</div>
+            <div class="m-desc">Explorar el espacio del problema, generar ideas. Modelo: Opus.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">spec-it</div>
+            <div class="m-desc">Generar SPEC.md + TODO.md + guardar en memoria dual. Modelo: Opus.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">execute-spec</div>
+            <div class="m-desc">Ejecutar tareas con waves de agentes paralelos. Modelo: Opus.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">verification</div>
+            <div class="m-desc">Verificar trabajo completado contra la spec. Modelo: Opus.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tech-pills reveal stagger-4">
+        <span class="t-pill t-primary">Engram (conocimiento)</span>
+        <span class="t-pill t-primary">Claude-Mem (historia + resumenes)</span>
+        <span class="t-pill t-secondary">mem_save</span>
+        <span class="t-pill t-secondary">mem_search</span>
+        <span class="t-pill t-secondary">mem_context</span>
+        <span class="t-pill t-secondary">HTTP: /api/sessions/summarize</span>
+      </div>
+
+      <div style="height:1.5rem;"></div>
+
+      <div class="reveal stagger-5" style="text-align:center;">
+        <div style="font-size:20px;font-weight:600;color:#00B7FF;font-family:'Alexandria',sans-serif;">Kiwi Financial Group Inc.</div>
+        <div style="font-size:12px;color:#4a6a8a;margin-top:6px;">AryFlow by Alejandro Eslava</div>
+        <div style="font-size:11px;color:#3a5a7a;margin-top:4px;">kiwicredito.com -- Marzo 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 15: REQUISITOS — HERRAMIENTAS ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-15"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">15</div>
+      <div class="slide-tag reveal">Instalacion</div>
+      <h2 class="slide-title reveal stagger-1">Que Necesitas Instalar</h2>
+      <p class="slide-subtitle reveal stagger-2">Herramientas y plugins para el sistema</p>
+
+      <!-- MCP Servers -->
+      <div style="width:100%;text-align:left;margin-top:1.5rem;">
+        <div class="reveal stagger-3" style="font-size:13px;font-weight:600;color:#00B7FF;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;">MCP Servers</div>
+      </div>
+      <div class="milestones-grid reveal stagger-3" style="max-width:800px;">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Engram — Memoria estructurada</div>
+            <div class="m-desc"><code style="font-size:10px;color:#00e5ff;background:#00B7FF12;padding:2px 5px;border-radius:3px;">brew install gentleman-programming/tap/engram</code></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Claude-Mem — Red de seguridad</div>
+            <div class="m-desc"><code style="font-size:10px;color:#00e5ff;background:#00B7FF12;padding:2px 5px;border-radius:3px;">/plugin marketplace add thedotmack/claude-mem</code></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Superpowers -->
+      <div style="width:100%;text-align:left;margin-top:1.5rem;">
+        <div class="reveal stagger-4" style="font-size:13px;font-weight:600;color:#00B7FF;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;">Superpowers (skill pack externo)</div>
+      </div>
+      <div class="milestones-grid reveal stagger-4" style="max-width:800px;grid-template-columns:1fr;">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">Superpowers — Skills de desarrollo</div>
+            <div class="m-desc"><code style="font-size:10px;color:#00e5ff;background:#00B7FF12;padding:2px 5px;border-radius:3px;">/plugin install superpowers</code></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Superpowers skills used -->
+      <div style="width:100%;text-align:left;margin-top:1.2rem;">
+        <div class="reveal stagger-5" style="font-size:11px;font-weight:400;color:#6a8aa8;margin-bottom:8px;">Skills que usamos de Superpowers:</div>
+      </div>
+      <div class="tech-pills reveal stagger-5">
+        <span class="t-pill t-secondary">brainstorming</span>
+        <span class="t-pill t-secondary">requesting-code-review</span>
+        <span class="t-pill t-secondary">verification-before-completion</span>
+        <span class="t-pill t-secondary">finishing-a-development-branch</span>
+        <span class="t-pill t-secondary">simplify</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 16: REQUISITOS — SKILLS Y AGENTES ═══ -->
+  <div class="slide">
+    <div class="particles" id="particles-16"></div>
+    <div class="slide-inner center">
+      <div class="slide-num" style="left:50%;transform:translateX(-50%);">16</div>
+      <div class="slide-tag reveal">Instalacion</div>
+      <h2 class="slide-title reveal stagger-1">Lo que Vive en tu Repositorio</h2>
+      <p class="slide-subtitle reveal stagger-2">Skills y agentes en .claude/ — se commitean con el codigo</p>
+
+      <!-- Skills -->
+      <div style="width:100%;text-align:left;margin-top:1.5rem;">
+        <div class="reveal stagger-3" style="font-size:13px;font-weight:600;color:#00B7FF;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;">Skills (.claude/skills/)</div>
+      </div>
+      <div class="milestones-grid reveal stagger-3" style="max-width:800px;">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">spec-it</div>
+            <div class="m-desc">Genera SPEC.md + TODO.md con waves. <code style="font-size:10px;color:#00e5ff;background:#00B7FF12;padding:2px 5px;border-radius:3px;">/spec-it {feature}</code></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">execute-spec</div>
+            <div class="m-desc">Ejecuta waves paralelas de agentes. <code style="font-size:10px;color:#00e5ff;background:#00B7FF12;padding:2px 5px;border-radius:3px;">/execute-spec {NNN}-{feature}</code></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">commit</div>
+            <div class="m-desc">Genera commits convencionales. <code style="font-size:10px;color:#00e5ff;background:#00B7FF12;padding:2px 5px;border-radius:3px;">/commit</code></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">pr</div>
+            <div class="m-desc">Crea pull requests con template. <code style="font-size:10px;color:#00e5ff;background:#00B7FF12;padding:2px 5px;border-radius:3px;">/pr</code></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agents -->
+      <div style="width:100%;text-align:left;margin-top:1.5rem;">
+        <div class="reveal stagger-4" style="font-size:13px;font-weight:600;color:#00B7FF;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;">Agents (.claude/agents/)</div>
+      </div>
+      <div class="security-grid reveal stagger-4" style="max-width:800px;">
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">merge-wave</div>
+            <div class="m-desc">Integra trabajo de cada wave, resuelve conflictos. Opus.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">post-spec-docs</div>
+            <div class="m-desc">Actualiza CLAUDE.md y docs. Sonnet.</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-icon"></div>
+          <div>
+            <div class="m-title">knowledge-gc</div>
+            <div class="m-desc">Limpia entradas [DEPRECATED]. Sonnet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prerequisites -->
+      <div class="glass-note-blue reveal stagger-7" style="max-width:700px;margin:1rem auto 0;">
+        <p><strong>Prerequisitos:</strong> Claude Code con plan Max (Opus 4.6, 1M tokens), Git, Node.js 18+, Bun, y un CLAUDE.md configurado con las convenciones del proyecto.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const deck = document.getElementById('deck');
+  const dots = document.querySelectorAll('.nav-dot');
+  const total = 17;
+  let current = 0;
+  let isAnimating = false;
+
+  function goSlide(n) {
+    if (isAnimating) return;
+    if (n < 0) n = 0;
+    if (n >= total) n = total - 1;
+    if (n === current) return;
+    isAnimating = true;
+    current = n;
+    deck.style.transform = `translateX(-${current * 100}vw)`;
+    dots.forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+    document.getElementById('progressBar').style.width = ((current + 1) / total * 100) + '%';
+    document.getElementById('slideCounter').textContent =
+      String(current + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+    setTimeout(() => {
+      isAnimating = false;
+      animateSlide(current);
+    }, 750);
+  }
+
+  // Keyboard nav
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); goSlide(current + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goSlide(current - 1); }
+  });
+
+  // Wheel nav (horizontal scroll feel)
+  let wheelCooldown = false;
+  document.addEventListener('wheel', e => {
+    if (wheelCooldown) return;
+    wheelCooldown = true;
+    if (e.deltaY > 30 || e.deltaX > 30) goSlide(current + 1);
+    else if (e.deltaY < -30 || e.deltaX < -30) goSlide(current - 1);
+    setTimeout(() => wheelCooldown = false, 900);
+  }, { passive: true });
+
+  // Touch nav
+  let touchX = 0;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (dx < -50) goSlide(current + 1);
+    if (dx > 50) goSlide(current - 1);
+  });
+
+  // Reveal animations
+  function animateSlide(idx) {
+    const slide = document.querySelectorAll('.slide')[idx];
+    slide.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
+      el.classList.add('visible');
+    });
+    // Animate count-up numbers
+    slide.querySelectorAll('.count-up').forEach(el => {
+      const target = parseInt(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      const duration = 1200;
+      const startTime = performance.now();
+      function tick(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const val = Math.round(eased * target);
+        el.textContent = val + suffix;
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  // Create particles
+  for (let s = 0; s < total; s++) {
+    const container = document.getElementById('particles-' + s);
+    if (!container) continue;
+    for (let i = 0; i < 15; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDelay = Math.random() * 6 + 's';
+      p.style.animationDuration = (4 + Math.random() * 4) + 's';
+      p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+      container.appendChild(p);
+    }
+  }
+
+  // Init first slide
+  animateSlide(0);
+</script>
+</body>
+</html>

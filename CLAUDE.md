@@ -58,7 +58,9 @@ aryflow/
 
 1. **ONLY edit `.claude/`** — never edit `embedded/` directly
 2. **After editing `.claude/`, copy to `embedded/`**: `cp .claude/{path} embedded/{path}`
-3. **Hook format**: always use `hookSpecificOutput` with `hookEventName` + `additionalContext` — never `systemMessage` (which only shows in UI, not to the agent)
+3. **Hook JSON format** depends on the event:
+   - `PostToolUse`, `PreToolUse`, `UserPromptSubmit` → use `hookSpecificOutput` with `additionalContext`
+   - `Stop`, `SubagentStop`, `SessionStart` → use `systemMessage` (hookSpecificOutput not supported for these events)
 4. **Run `make sync-check`** before committing to verify sync
 
 ## Verification

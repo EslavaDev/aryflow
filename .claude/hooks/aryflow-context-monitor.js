@@ -10,7 +10,7 @@ const os = require('os');
 const WARNING_THRESHOLD = 35;  // remaining_percentage <= 35%
 const CRITICAL_THRESHOLD = 25; // remaining_percentage <= 25%
 const STALE_SECONDS = 60;
-const DEBOUNCE_CALLS = 5;
+const DEBOUNCE_CALLS = 15;
 
 let input = '';
 const stdinTimeout = setTimeout(() => process.exit(0), 3000);

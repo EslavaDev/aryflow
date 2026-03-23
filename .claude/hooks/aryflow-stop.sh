@@ -1,29 +1,44 @@
 #!/bin/bash
-# AryFlow Stop hook -- blocks summary/knowledge agents during active spec execution
-# If execute-spec is active (TODO.md has unchecked items), block subsequent hooks.
-# If no spec active, allow agents to save summary + extract knowledge.
+# AryFlow Stop hook -- only triggers summary/knowledge agents when a spec just completed
+# Three states:
+#   1. Mid-spec (unchecked TODO items) → block agents
+#   2. Spec just completed (all TODO checked) → allow agents (summary + knowledge)
+#   3. No spec at all (normal conversation) → block agents (not needed)
 
-TODO_FILE="specifications/*/TODO.md"
+HAS_SPEC=false
 MID_SPEC=false
 
-for f in $TODO_FILE; do
-  if [ -f "$f" ] && grep -q '^\s*- \[ \]' "$f" 2>/dev/null; then
-    MID_SPEC=true
-    break
+for f in specifications/*/TODO.md; do
+  if [ -f "$f" ]; then
+    HAS_SPEC=true
+    if grep -q '^\s*- \[ \]' "$f" 2>/dev/null; then
+      MID_SPEC=true
+      break
+    fi
   fi
 done
 
 if [ "$MID_SPEC" = true ]; then
+  # Active spec with pending tasks -- block everything
   cat <<'EOF'
 {
   "continue": false,
-  "stopReason": "ARYFLOW: execute-spec session detected (unchecked TODO items). Skipping summary and knowledge extraction -- wave progress is tracked by the orchestrator."
+  "stopReason": "ARYFLOW: Mid-spec execution. Skipping summary and knowledge -- orchestrator handles progress."
+}
+EOF
+elif [ "$HAS_SPEC" = true ]; then
+  # Spec exists and all tasks done -- allow summary + knowledge extraction
+  cat <<'EOF'
+{
+  "systemMessage": "ARYFLOW: Spec completed. Saving summary to claude-mem and extracting knowledge to engram."
 }
 EOF
 else
+  # No spec -- normal conversation, don't waste agents
   cat <<'EOF'
 {
-  "systemMessage": "ARYFLOW SESSION END: Saving summary to claude-mem and extracting knowledge to engram."
+  "continue": false,
+  "stopReason": "ARYFLOW: No active spec. Skipping summary and knowledge agents."
 }
 EOF
 fi

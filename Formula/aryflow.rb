@@ -1,22 +1,22 @@
 class Aryflow < Formula
   desc "CLI tool for AryFlow workflow automation"
   homepage "https://github.com/EslavaDev/aryflow"
-  version "0.2.2"
+  version "0.2.3"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/EslavaDev/aryflow/releases/download/v0.2.2/aryflow_0.2.2_darwin_arm64.tar.gz"
-      sha256 "030168f961db0b7e693f6a2188a24d47a96085a5db64bc0d00f4353e74135c95"
+      url "https://github.com/EslavaDev/aryflow/releases/download/v0.2.3/aryflow_0.2.3_darwin_arm64.tar.gz"
+      sha256 "77387252689d6714779ccfd1565ac926b5078e78ebb3794b320e611546ccc2db"
     else
-      url "https://github.com/EslavaDev/aryflow/releases/download/v0.2.2/aryflow_0.2.2_darwin_amd64.tar.gz"
-      sha256 "2e97742e3006132b98883760bf6ca1abacc5448771b3150c8682857592311868"
+      url "https://github.com/EslavaDev/aryflow/releases/download/v0.2.3/aryflow_0.2.3_darwin_amd64.tar.gz"
+      sha256 "e8175e252e06ce0a9eff4494365d86907415026911191e5732a15dfa29aa93bd"
     end
   end
 
   on_linux do
-    url "https://github.com/EslavaDev/aryflow/releases/download/v0.2.2/aryflow_0.2.2_linux_amd64.tar.gz"
-    sha256 "daa7248a6f35d59de39f45415fba5ed6e5ffba5cbeb308a15ed69426f4227844"
+    url "https://github.com/EslavaDev/aryflow/releases/download/v0.2.3/aryflow_0.2.3_linux_amd64.tar.gz"
+    sha256 "f43733c24c63a048a67396c599c891e014d738d88a62966c884f2c249d557e14"
   end
 
   def install
